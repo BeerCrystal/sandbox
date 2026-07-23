@@ -94,12 +94,12 @@ watch_d = 10.5;                              // body thickness (incl. curved bac
 // this further; if the pocket gapes at the corners, raise it.
 watch_r = (WATCH_SIZE==38) ? 6.0 : 6.5;
 
-// Digital Crown centre ~26% of body height down from the TOP edge; the
+// Digital Crown centre ~29.8% of body height down from the TOP edge; the
 // button slot centre ~61% with the slot running well down the lower half.
 // (Started from Series 0 profile-photo proportions — Apple publishes no
 // drawing — then tuned against a physical 1st-gen watch via test prints.)
 // Offsets are from body mid-height, + = up.
-_crown_off  = (crown_off_y  != 0) ? crown_off_y  : (watch_h/2 - 0.262*watch_h);
+_crown_off  = (crown_off_y  != 0) ? crown_off_y  : (watch_h/2 - 0.298*watch_h);
 _button_off = (button_off_y != 0) ? button_off_y : (watch_h/2 - 0.612*watch_h);
 _back_win   = (back_win_d   != 0) ? back_win_d   : (watch_w - 5.0);
 
