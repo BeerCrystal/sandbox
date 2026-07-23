@@ -73,9 +73,9 @@ Shape decisions made for hand feel:
   below the watch as the bolts and lanyard actually need.
 - **Finger scallop** around the Digital Crown opening so your fingertip can
   reach the crown through a 2.6 mm wall without the opening being oversized.
-- The parting line between the two parts reads as a subtle V-groove seam that
-  runs around the middle — a design line, and a tactile locator for which way
-  the case is facing in your pocket.
+- The two parts meet **flush** — the sides run straight through the parting
+  line with round-overs only on the front and back faces, so the seam reads
+  as a hairline, exactly like an earbud-case shell.
 
 The width and thickness are watch-driven (36.4 mm body + minimum walls;
 10.5 mm body + front face + backplate) and can't shrink further without
@@ -263,6 +263,10 @@ drag the parameters and hit **Render → Export STL**.
 
 ### Changelog
 
+- **v5.1** — seam squared off: edge fillets now stop at the parting plane, so
+  the bezel and backplate meet flush with straight sides (the v5 all-edge
+  fillet left a V-groove around the middle). Round-overs remain on the front
+  and back faces only.
 - **v5** — **rounded like an AirPods case**: corner radius 5 → 10 mm, edge
   fillets deepened (bezel 2.4 mm, backplate 1.6 mm). Bolts moved inboard so
   their hex pockets clear the big corner arcs, and the top block grew 2 mm to

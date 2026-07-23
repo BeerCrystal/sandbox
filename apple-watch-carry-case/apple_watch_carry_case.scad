@@ -143,13 +143,23 @@ module fslab(w,h,d,r,e){
     }
 }
 
+// slab filleted ONLY on its z=0 face; the z=d face stays a sharp square
+// edge, so the two parts meet flush at the seam with straight sides
+module hslab(w,h,d,r,e){
+    if(e<=0) slab(w,h,d,r);
+    else intersection(){
+        fslab(w, h, d+e+0.1, r, e);
+        slab(w, h, d, r);
+    }
+}
+
 // ===========================================================================
 //  PART: BEZEL (front tray)
 // ===========================================================================
 module bezel(){
     difference(){
-        // solid outer body, filleted edges
-        translate([0,outer_yc,0]) fslab(outer_w, outer_h, bezel_d, outer_r, fillet_bez);
+        // solid outer body: front face filleted, back (mating) edge square
+        translate([0,outer_yc,0]) hslab(outer_w, outer_h, bezel_d, outer_r, fillet_bez);
         // watch pocket, open toward the back (+Z)
         translate([0,0,face_t]) slab(pocket_w, pocket_h, pocket_d+2, pocket_r);
         // screen window through the front face
@@ -182,7 +192,9 @@ module bezel(){
 // ===========================================================================
 module backplate(){
     difference(){
-        translate([0,outer_yc,0]) fslab(outer_w, outer_h, back_d, outer_r, fillet_bak);
+        // outer face filleted, front (mating) edge square to meet the bezel flush
+        translate([0,outer_yc,back_d]) mirror([0,0,1])
+            hslab(outer_w, outer_h, back_d, outer_r, fillet_bak);
         // central sensor / charging window
         translate([0,0,-0.5]) cylinder(h=back_d+1, d=_back_win, $fn=96);
         // bolt clearance holes + HEX pockets on the outer face
