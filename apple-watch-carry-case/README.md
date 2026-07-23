@@ -48,13 +48,13 @@ Each hex head drops into a hex-shaped pocket on the backplate and sinks
 
 ## Ergonomics — will it disappear into a small/medium hand?
 
-Finished dimensions (42 mm watch): **41.9 × 64.8 × 16.7 mm**. For scale:
+Finished dimensions (42 mm watch): **41.9 × 66.8 × 16.7 mm**. For scale:
 
 | Object | Size (mm) |
 |--------|-----------|
 | Zippo lighter | 38 × 57 × 13 |
-| **This case (42 mm watch)** | **41.9 × 64.8 × 16.7** |
-| **This case (38 mm watch)** | **39.3 × 61.4 × 16.7** |
+| **This case (42 mm watch)** | **41.9 × 66.8 × 16.7** |
+| **This case (38 mm watch)** | **39.3 × 63.4 × 16.7** |
 | AirPods Pro case | 45 × 61 × 22 |
 | Car key fob (typical) | ~40 × 75 × 18 |
 
@@ -66,9 +66,9 @@ disappears.
 
 Shape decisions made for hand feel:
 
-- **All outer edges filleted** (1.2 mm front part, 1.0 mm back) — no sharp
-  corner anywhere; it feels like a river pebble, not a project box.
-- **5 mm corner radius** on the brick outline.
+- **All outer edges filleted** (2.4 mm front part, 1.6 mm back) — soap-bar
+  edges; it feels like a river pebble, not a project box.
+- **10 mm corner radius** on the brick outline — the AirPods-case silhouette.
 - **Slimmed end blocks** vs. a naive design — only as much material above and
   below the watch as the bolts and lanyard actually need.
 - **Finger scallop** around the Digital Crown opening so your fingertip can
@@ -181,9 +181,9 @@ hex_seat = 2.4;  // pocket depth; 2 mm head sinks ~0.4 mm sub-flush.
 Shape / feel:
 
 ```scad
-fillet_bez = 1.2; // edge rounding, front part
-fillet_bak = 1.0; // edge rounding, backplate
-outer_r    = 5.0; // brick corner radius
+fillet_bez = 2.4; // edge rounding, front part
+fillet_bak = 1.6; // edge rounding, backplate
+outer_r    = 10.0; // brick corner radius (AirPods-case-like)
 back_win_d = 0;   // 0 = auto (watch_w − 5). Enlarge if your charger puck is wide.
 lanyard_d  = 5.0; // paracord hole Ø (type-III paracord ≈ 4 mm)
 ```
@@ -262,6 +262,13 @@ drag the parameters and hit **Render → Export STL**.
   set `hex_seat = 0.8` — they'll stand ~1.2 mm proud instead of flush.
 
 ### Changelog
+
+- **v5** — **rounded like an AirPods case**: corner radius 5 → 10 mm, edge
+  fillets deepened (bezel 2.4 mm, backplate 1.6 mm). Bolts moved inboard so
+  their hex pockets clear the big corner arcs, and the top block grew 2 mm to
+  make room (case now 41.9 × 66.8 × 16.7 / 39.3 × 63.4 × 16.7). All
+  clearances re-audited numerically on both sizes. Watch-fit dimensions and
+  the tuned crown/button positions unchanged.
 
 - **v4.1** — position tuning from a fit check on the physical watch: crown
   opening moved **2 mm further up** (centre now 26 % of body height from the

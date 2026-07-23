@@ -50,11 +50,11 @@ win_lip    = 2.2;         // how far the front window overlaps the watch edge (r
 wall       = 2.6;         // side-wall thickness beside the watch
 face_t     = 1.8;         // front face (bezel) thickness in front of the screen
 back_d     = 4.0;         // backplate thickness (holds the fully-sunk hex heads)
-end_top    = 8.0;         // solid material above the watch (top bolts)
+end_top    = 10.0;        // solid material above the watch (top bolts)
 end_bot    = 14.0;        // solid material below the watch (bottom bolts + lanyard)
-outer_r    = 5.0;         // outer corner radius of the brick
-fillet_bez = 1.2;         // edge fillet radius on the bezel (0.4–1.6 sensible)
-fillet_bak = 1.0;         // edge fillet radius on the backplate
+outer_r    = 10.0;        // outer corner radius — big & soft, AirPods-case-like
+fillet_bez = 2.4;         // edge fillet radius on the bezel (soap-bar edges)
+fillet_bak = 1.6;         // edge fillet radius on the backplate
 
 /* [Openings] */
 back_win_d   = 0;         // central back window Ø (0 = auto: watch_w - 5)
@@ -116,8 +116,10 @@ win_r = max(1.0, watch_r - win_lip);
 zc = face_t + watch_d/2;                      // right-wall opening centre (thickness)
 
 // bolt / lanyard positions (watch-centred coordinates)
-sx        = outer_w/2 - 5.2;
-sy        = watch_h/2 + tol + 3.6;            // bolts sit 3.6 mm into each end block
+// bolts sit further inboard than a square-cornered design would allow, so
+// their hex pockets stay inside the large corner arcs on both plates
+sx        = outer_w/2 - 8.5;
+sy        = watch_h/2 + tol + 4.0;            // bolts sit 4 mm into each end block
 lanyard_y = -(watch_h/2 + tol + end_bot*0.68);
 screw_pos = [[ sx, sy],[-sx, sy],[ sx,-sy],[-sx,-sy]];
 
