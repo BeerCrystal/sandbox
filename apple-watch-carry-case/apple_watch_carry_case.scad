@@ -57,12 +57,17 @@ fillet_bez = 2.4;         // edge fillet radius on the bezel (soap-bar edges)
 fillet_bak = 1.6;         // edge fillet radius on the backplate
 
 /* [Openings] */
-back_win_d   = 0;         // central back window Ø (0 = auto: watch_w - 5)
+back_win_d   = 0;         // central back window Ø at the watch side (0 = auto: watch_w - 5)
+back_win_taper = 0;       // window Ø at the OUTER face (0 = auto: window + 5).
+                          // The bore is a funnel: a charger puck wider than the
+                          // inner window sinks in, self-centres, and its face
+                          // lands ~1 mm from the sensor instead of 4 mm away.
 crown_cut_d  = 11.5;      // Digital Crown access opening Ø (crown wall)
 crown_scallop= 2.5;       // extra Ø of the finger scallop around the crown (0 = off)
 crown_off_y  = 0;         // crown centre offset from watch mid-height (0 = auto)
 button_cut_w = 5.0;       // side-button slot width
-button_cut_h = 21.4;      // side-button slot length (along height)
+bridge_web   = 1.6;       // solid bridge between the crown hole and button slot
+button_cut_h = 16.6;      // slot length — used only with a button_off_y override
 button_off_y = 0;         // button centre offset from watch mid-height (0 = auto)
 
 /* [Lanyard] */
@@ -100,8 +105,14 @@ watch_r = (WATCH_SIZE==38) ? 6.0 : 6.5;
 // drawing — then tuned against a physical 1st-gen watch via test prints.)
 // Offsets are from body mid-height, + = up.
 _crown_off  = (crown_off_y  != 0) ? crown_off_y  : (watch_h/2 - 0.298*watch_h);
-_button_off = (button_off_y != 0) ? button_off_y : (watch_h/2 - 0.612*watch_h);
+// button slot edges: top edge hangs off the crown hole with a solid bridge_web
+// between the two openings; bottom edge reaches ~87% of body height
+_slot_top = (button_off_y != 0) ? (button_off_y + button_cut_h/2)
+                                : (_crown_off - crown_cut_d/2 - bridge_web);
+_slot_bot = (button_off_y != 0) ? (button_off_y - button_cut_h/2)
+                                : (watch_h/2 - 0.867*watch_h);
 _back_win   = (back_win_d   != 0) ? back_win_d   : (watch_w - 5.0);
+_back_taper = (back_win_taper != 0) ? back_win_taper : (_back_win + 5.0);
 
 pocket_w = watch_w + 2*tol;
 pocket_h = watch_h + 2*tol;
@@ -176,10 +187,11 @@ module bezel(){
         if(crown_scallop>0)
             translate([-(outer_w/2+0.01), _crown_off, zc]) rotate([0,90,0])
                 cylinder(h=1.6, d1=crown_cut_d+crown_scallop, d2=crown_cut_d, $fn=48);
-        // side-button slot (same wall as the crown, just below it)
-        translate([-outer_w/2, _button_off, zc]) rotate([0,90,0])
-            hull() for(iy=[-1,1])
-                translate([0, iy*(button_cut_h-button_cut_w)/2, 0])
+        // side-button slot: separate opening below the crown hole, with a
+        // solid bridge of material between the two (no fragile keyhole tab)
+        translate([-outer_w/2, 0, zc]) rotate([0,90,0])
+            hull() for(yy=[_slot_top-button_cut_w/2, _slot_bot+button_cut_w/2])
+                translate([0, yy, 0])
                     cylinder(h=wall*4, d=button_cut_w, center=true, $fn=32);
         // bolt pilot holes (drilled from the back, blind at the front)
         for(p=screw_pos)
@@ -199,8 +211,11 @@ module backplate(){
         // outer face filleted, front (mating) edge square to meet the bezel flush
         translate([0,outer_yc,back_d]) mirror([0,0,1])
             hslab(outer_w, outer_h, back_d, outer_r, fillet_bak);
-        // central sensor / charging window
-        translate([0,0,-0.5]) cylinder(h=back_d+1, d=_back_win, $fn=96);
+        // central sensor / charging window — tapered funnel bore: watch-side
+        // diameter _back_win, opening to _back_taper at the outer face so the
+        // charger puck sinks in, self-centres, and sits close to the sensor
+        translate([0,0,-0.01])
+            cylinder(h=back_d+0.02, d1=_back_win, d2=_back_taper, $fn=96);
         // bolt clearance holes + HEX pockets on the outer face
         //   (M3 hex heads drop in fully — ~0.4 mm below the surface, so the
         //    back lays flat; the hex seat keys them against rotation so they
@@ -226,7 +241,7 @@ module watch_mock(){
     color("silver") translate([-watch_w/2, _crown_off, watch_d/2])
         rotate([0,-90,0]) cylinder(h=2.4, d=7, $fn=40);
     // side button
-    color("silver") translate([-watch_w/2, _button_off, watch_d/2])
+    color("silver") translate([-watch_w/2, (_slot_top+_slot_bot)/2, watch_d/2])
         rotate([0,-90,0]) cylinder(h=1.6, d=4, $fn=32);
 }
 
@@ -243,10 +258,9 @@ module side_gauge(){
         linear_extrude(gt) rrect(gw, watch_h, 2);
         // crown + button apertures at the exact case-cut positions
         translate([0, _crown_off, -0.5]) cylinder(h=gt+1, d=crown_cut_d, $fn=48);
-        translate([0, _button_off, -0.5]) linear_extrude(gt+1)
-            hull() for(iy=[-1,1])
-                translate([0, iy*(button_cut_h-button_cut_w)/2])
-                    circle(d=button_cut_w, $fn=32);
+        translate([0, 0, -0.5]) linear_extrude(gt+1)
+            hull() for(yy=[_slot_top-button_cut_w/2, _slot_bot+button_cut_w/2])
+                translate([0, yy]) circle(d=button_cut_w, $fn=32);
         // chamfered corner marks the TOP edge
         translate([-gw/2, watch_h/2, -0.5])
             linear_extrude(gt+1) rotate(45) square(6, center=true);

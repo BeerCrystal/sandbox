@@ -21,7 +21,7 @@ Two printed parts clamp the watch like a sandwich:
 | Part | Role |
 |------|------|
 | **Bezel** (front) | The watch drops in **face-first**. A lip around the screen window holds it from falling forward. The right wall has an opening for the **Digital Crown** (with a finger scallop) and a slot for the **side button**. A transverse **lanyard hole** runs through the bottom block. |
-| **Backplate** | Bolts onto the back with 4 hex bolts and clamps the watch. A **central round window** exposes the sensor/back so the **magnetic charger still reaches it** — you can charge without removing the watch. |
+| **Backplate** | Bolts onto the back with 4 hex bolts and clamps the watch. A **central funnel window** exposes the sensor/back: 30.9 mm at the watch side opening to ~36 mm outside, so the **charger puck sinks in, self-centres, and sits ~1 mm from the sensor** — charge without removing the watch. |
 
 **Hardware you supply:** 4× **M3×10 hex-head bolts** (DIN 933, 5.5 mm across
 flats — hardware-store standard) and a length of **paracord** for the lanyard.
@@ -102,8 +102,9 @@ commit to a full print:
 2. **The Crown & side-button positions have been tuned against a physical
    1st-gen watch** (Apple publishes no drawing; positions started from photo
    analysis and were corrected through test prints). Defaults put the crown
-   centre 26 % of the body height down from the top edge, with the button
-   slot running from there to 87 % down. **Print the side gauge first**
+   centre ~30 % of the body height down from the top edge, and the button slot
+   below it as a separate opening (solid 1.6 mm bridge between the two)
+   reaching to 87 % down. **Print the side gauge first**
    (5-minute print, below) to confirm on your own watch before printing the
    full bezel.
 
@@ -187,7 +188,9 @@ Shape / feel:
 fillet_bez = 2.4; // edge rounding, front part
 fillet_bak = 1.6; // edge rounding, backplate
 outer_r    = 10.0; // brick corner radius (AirPods-case-like)
-back_win_d = 0;   // 0 = auto (watch_w − 5). Enlarge if your charger puck is wide.
+back_win_d     = 0; // watch-side window Ø; 0 = auto (watch_w − 5)
+back_win_taper = 0; // outer-face Ø of the funnel; 0 = auto (window + 5)
+bridge_web     = 1.6; // solid bridge between crown hole and button slot
 lanyard_d  = 5.0; // paracord hole Ø (type-III paracord ≈ 4 mm)
 ```
 
@@ -265,6 +268,13 @@ drag the parameters and hit **Render → Export STL**.
   set `hex_seat = 0.8` — they'll stand ~1.2 mm proud instead of flush.
 
 ### Changelog
+
+- **v5.4** — two fixes from slicing the parts: the crown hole and button slot
+  are now **separate openings with a solid 1.6 mm bridge** (the merged keyhole
+  left a fragile disconnected tab), and the charging window is a **funnel bore**
+  (30.9 mm watch-side → 35.9 mm outside) so a charger puck wider than the
+  window sinks in, self-centres, and lands ~1 mm from the sensor instead of
+  the full 4 mm plate thickness away. Verified in the exported STLs.
 
 - **v5.2** — **pocket corners squared** after a fit test: the body corner
   radius estimate (9.3 mm) was too round and blocked the watch at the four
