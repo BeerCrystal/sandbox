@@ -30,28 +30,31 @@ M3 heat-set inserts.
 
 ### The bolt detail
 
-The bolt heads are **not hidden** — each head drops into a shallow hex-shaped
-seat on the backplate and stands **~1.2 mm proud** of the surface:
+Each hex head drops into a hex-shaped pocket on the backplate and sinks
+**fully below the surface** (~0.4 mm sub-flush):
 
-- **Grip** — four raised metal studs under your fingers, exactly the tactile
-  hardware look of the reference design.
-- **Security** — once seated, the hex pocket keys the head against rotation, so
-  the bolts cannot vibrate loose in a pocket. To remove them you back the case
-  apart deliberately; they never walk out on their own.
-- Tighten with a 5.5 mm nut driver / socket until the head sinks into its seat,
-  then a final snug by hand. Don't overtighten — printed threads strip.
+- **Lays dead flat** — nothing protrudes from the back, so the case sits flat
+  on a table and nothing snags in a pocket. The silver hexagons read as a
+  clean machined detail in the surface.
+- **Security** — once seated, the hex pocket keys the head against rotation,
+  so the bolts cannot vibrate loose. To remove them you back the case apart
+  deliberately; they never walk out on their own.
+- Tighten with a 5.5 mm nut driver / socket — the driver reaches the head
+  until the final fraction of a turn drops it into the keyed seat, then give a
+  last snug by hand pressing the bolt home. Don't overtighten — printed
+  threads strip.
 
 ---
 
 ## Ergonomics — will it disappear into a small/medium hand?
 
-Finished dimensions (42 mm watch): **42.4 × 65.3 × 15.7 mm**. For scale:
+Finished dimensions (42 mm watch): **42.4 × 65.3 × 16.7 mm**. For scale:
 
 | Object | Size (mm) |
 |--------|-----------|
 | Zippo lighter | 38 × 57 × 13 |
-| **This case (42 mm watch)** | **42.4 × 65.3 × 15.7** |
-| **This case (38 mm watch)** | **39.3 × 61.4 × 15.7** |
+| **This case (42 mm watch)** | **42.4 × 65.3 × 16.7** |
+| **This case (38 mm watch)** | **39.3 × 61.4 × 16.7** |
 | AirPods Pro case | 45 × 61 × 22 |
 | Car key fob (typical) | ~40 × 75 × 18 |
 
@@ -76,7 +79,9 @@ Shape decisions made for hand feel:
 
 The width and thickness are watch-driven (36.4 mm body + minimum walls;
 10.5 mm body + front face + backplate) and can't shrink further without
-thinning protection.
+thinning protection. The 4 mm backplate is what lets the bolt heads bury
+completely — the case **lays dead flat on its back**, nothing protrudes on
+any face.
 
 ---
 
@@ -164,7 +169,8 @@ Bolt seats / hardware:
 ```scad
 hex_af   = 5.5;  // bolt head across-flats (M3 DIN 933 = 5.5)
 hex_clr  = 0.40; // seat clearance — increase if heads won't drop in
-hex_seat = 0.8;  // seat depth; 2 mm head → ~1.2 mm proud. Deeper = flusher.
+hex_seat = 2.4;  // pocket depth; 2 mm head sinks ~0.4 mm sub-flush.
+                 // Want proud heads for grip instead? Set to 0.8.
 ```
 
 Shape / feel:
@@ -234,17 +240,21 @@ drag the parameters and hit **Render → Export STL**.
 - The Series 0 back is **slightly domed**; the central window gives it clearance
   and lets the charger through. If the fit is loose front-to-back, a thin
   adhesive foam pad on the inside of the backplate takes up the slack nicely.
-- **Bolt length matters**: M3×10 engages ~8 mm of printed pilot — right at the
-  sweet spot. M3×12 will bottom out just as the head seats; anything longer
-  will hit the blind end of the pilot before clamping. Stick to ×10.
+- **Bolt length matters**: with the head fully sunk, M3×10 engages ~8.4 mm of
+  printed pilot — right at the sweet spot. M3×12 will bottom out in the blind
+  pilot before the head seats. Stick to ×10.
 - Grip **knurling** from the reference video is intentionally left off (it makes
   slicing slow and prints fuzzier). Add texture in your slicer ("fuzzy skin") if
-  you want the look — the proud hex heads already give real grip points.
+  you want the look. If you'd rather have the bolt heads as raised grip studs,
+  set `hex_seat = 0.8` — they'll stand ~1.2 mm proud instead of flush.
 
 ### Changelog
 
+- **v3** — hex heads now **fully embedded** (~0.4 mm sub-flush) so the back
+  lays dead flat; backplate thickened 3 → 4 mm to keep a strong web under the
+  heads (case 15.7 → 16.7 mm thick).
 - **v2** — ergonomic pass: filleted all outer edges, slimmed end blocks
-  (~4 mm shorter), swapped countersunk screws for proud hex-head bolts in
-  keyed hex seats, added crown finger scallop, **fixed a v1 defect** where the
-  lanyard hole left only ~0.5 mm of rim at the bottom edge (now ~2 mm).
+  (~4 mm shorter), swapped countersunk screws for hex-head bolts in keyed hex
+  seats, added crown finger scallop, **fixed a v1 defect** where the lanyard
+  hole left only ~0.5 mm of rim at the bottom edge (now ~2 mm).
 - **v1** — initial design.

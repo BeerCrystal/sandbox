@@ -10,10 +10,13 @@
 //  v2 ergonomic pass:
 //    * all outer edges filleted (pebble feel, no sharp corners in the palm)
 //    * slimmer top/bottom blocks  ->  ~4 mm shorter overall
-//    * hex-head bolts seated in shallow hex pockets on the back; heads sit
-//      ~1.2 mm PROUD for grip, and the hex seat stops them self-loosening
 //    * finger scallop around the Digital Crown opening
 //    * lanyard hole moved inboard (v1 left only ~0.5 mm of rim below it)
+//  v3:
+//    * hex-head bolts now FULLY EMBEDDED: the hex pockets swallow the whole
+//      head (~0.4 mm sub-flush), so the bolt face lays dead flat on a table.
+//      The keyed hex seat still locks the heads against self-loosening.
+//      Backplate thickened 3 -> 4 mm to keep a strong web under the heads.
 //
 //  TWO PRINTED PARTS + hardware:
 //    * bezel      : front tray. Watch drops in face-first; a lip around the
@@ -46,7 +49,7 @@ win_lip    = 2.2;         // how far the front window overlaps the watch edge (r
 /* [Wall & shell] */
 wall       = 2.6;         // side-wall thickness beside the watch
 face_t     = 1.8;         // front face (bezel) thickness in front of the screen
-back_d     = 3.0;         // backplate thickness
+back_d     = 4.0;         // backplate thickness (holds the fully-sunk hex heads)
 end_top    = 8.0;         // solid material above the watch (top bolts)
 end_bot    = 14.0;        // solid material below the watch (bottom bolts + lanyard)
 outer_r    = 5.0;         // outer corner radius of the brick
@@ -70,7 +73,7 @@ screw_pilot_d = 2.5;      // pilot hole in the bezel (self-tap). Inserts? use 4.
 screw_clear_d = 3.4;      // clearance hole through the backplate
 hex_af        = 5.5;      // bolt head size across flats (M3 DIN 933 = 5.5)
 hex_clr       = 0.40;     // pocket clearance on the across-flats size
-hex_seat      = 0.8;      // hex pocket depth; 2 mm head -> ~1.2 mm sits PROUD
+hex_seat      = 2.4;      // hex pocket depth; 2 mm head sinks ~0.4 mm SUB-FLUSH
 
 /* [Render quality] */
 $fn = 64;
@@ -171,9 +174,10 @@ module backplate(){
         translate([0,outer_yc,0]) fslab(outer_w, outer_h, back_d, outer_r, fillet_bak);
         // central sensor / charging window
         translate([0,0,-0.5]) cylinder(h=back_d+1, d=_back_win, $fn=96);
-        // bolt clearance holes + shallow HEX seats on the outer face
-        //   (M3 hex heads drop in, sit ~1.2 mm proud for grip; the hex seat
-        //    keys them against rotation so they cannot self-loosen)
+        // bolt clearance holes + HEX pockets on the outer face
+        //   (M3 hex heads drop in fully — ~0.4 mm below the surface, so the
+        //    back lays flat; the hex seat keys them against rotation so they
+        //    cannot self-loosen)
         for(p=screw_pos){
             translate([p[0],p[1],-0.5]) cylinder(h=back_d+1, d=screw_clear_d, $fn=32);
             translate([p[0],p[1],back_d-hex_seat])
