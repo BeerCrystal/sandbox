@@ -144,15 +144,16 @@ module bezel(){
         translate([0,0,face_t]) slab(pocket_w, pocket_h, pocket_d+2, pocket_r);
         // screen window through the front face
         translate([0,0,-0.5]) slab(win_w, win_h, face_t+1, win_r);
-        // Digital Crown opening (right wall)
-        translate([outer_w/2, _crown_off, zc])
+        // Digital Crown opening — crown sits on the RIGHT when viewing the
+        // screen; the front faces -z, so that is the -x wall of the model
+        translate([-outer_w/2, _crown_off, zc])
             rotate([0,90,0]) cylinder(h=wall*4, d=crown_cut_d, center=true, $fn=48);
         // finger scallop around the crown opening (cone sunk into the wall)
         if(crown_scallop>0)
-            translate([outer_w/2+0.01, _crown_off, zc]) rotate([0,-90,0])
+            translate([-(outer_w/2+0.01), _crown_off, zc]) rotate([0,90,0])
                 cylinder(h=1.6, d1=crown_cut_d+crown_scallop, d2=crown_cut_d, $fn=48);
-        // side-button slot (right wall)
-        translate([outer_w/2, _button_off, zc]) rotate([0,90,0])
+        // side-button slot (same wall as the crown, just below it)
+        translate([-outer_w/2, _button_off, zc]) rotate([0,90,0])
             hull() for(iy=[-1,1])
                 translate([0, iy*(button_cut_h-button_cut_w)/2, 0])
                     cylinder(h=wall*4, d=button_cut_w, center=true, $fn=32);
@@ -195,12 +196,12 @@ module watch_mock(){
     // screen
     color("black") translate([0,0,watch_d-0.4])
         slab(watch_w-4, watch_h-6, 0.6, max(1,watch_r-3));
-    // digital crown
-    color("silver") translate([watch_w/2, _crown_off, watch_d/2])
-        rotate([0,90,0]) cylinder(h=2.4, d=7, $fn=40);
+    // digital crown (right side as viewed from the front = model -x)
+    color("silver") translate([-watch_w/2, _crown_off, watch_d/2])
+        rotate([0,-90,0]) cylinder(h=2.4, d=7, $fn=40);
     // side button
-    color("silver") translate([watch_w/2, _button_off, watch_d/2])
-        rotate([0,90,0]) cylinder(h=1.6, d=4, $fn=32);
+    color("silver") translate([-watch_w/2, _button_off, watch_d/2])
+        rotate([0,-90,0]) cylinder(h=1.6, d=4, $fn=32);
 }
 
 module bolt_mocks(){

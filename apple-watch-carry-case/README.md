@@ -250,6 +250,12 @@ drag the parameters and hit **Render → Export STL**.
 
 ### Changelog
 
+- **v3.1** — **fixed mirrored bezel**: the crown/button openings were cut on
+  the wrong wall (the internal preview couldn't catch it because the mock
+  watch shared the same mirrored frame). The Digital Crown opening is now on
+  the **right as you view the screen**, verified three ways: by coordinate
+  derivation, by front-view render, and by counting the openings' vertices on
+  each wall of the exported STLs. Backplate was x-symmetric and unaffected.
 - **v3** — hex heads now **fully embedded** (~0.4 mm sub-flush) so the back
   lays dead flat; backplate thickened 3 → 4 mm to keep a strong web under the
   heads (case 15.7 → 16.7 mm thick).
