@@ -1,5 +1,5 @@
 // ===========================================================================
-//  Apple Watch "Pocket Carry" Case  —  parametric, 3D-printable
+//  Apple Watch "Pocket Carry" Case  —  parametric, 3D-printable   (v2, sleek)
 //  Adapted for the 1st-generation Apple Watch (Series 0: 38 mm / 42 mm)
 //
 //  Inspired by the screwed-sandwich pocket fob in the reference video
@@ -7,14 +7,23 @@
 //  smaller, curved-back Series 0 body and is fully parametric so you can
 //  tune it to YOUR watch and YOUR printer.
 //
+//  v2 ergonomic pass:
+//    * all outer edges filleted (pebble feel, no sharp corners in the palm)
+//    * slimmer top/bottom blocks  ->  ~4 mm shorter overall
+//    * hex-head bolts seated in shallow hex pockets on the back; heads sit
+//      ~1.2 mm PROUD for grip, and the hex seat stops them self-loosening
+//    * finger scallop around the Digital Crown opening
+//    * lanyard hole moved inboard (v1 left only ~0.5 mm of rim below it)
+//
 //  TWO PRINTED PARTS + hardware:
 //    * bezel      : front tray. Watch drops in face-first; a lip around the
 //                   screen window retains it. Right wall has openings for the
 //                   Digital Crown and the side button. Lanyard hole at bottom.
-//    * backplate  : screws onto the back and clamps the watch in place. A
-//                   central round window exposes the sensor so the magnetic
-//                   charger still reaches the back.
-//    Hardware     : 4x M3 self-tapping screws (~16 mm) + a paracord lanyard.
+//    * backplate  : bolts onto the back and clamps the watch. A central round
+//                   window exposes the sensor so the magnetic charger still
+//                   reaches the back.
+//    Hardware     : 4x M3x10 HEX-HEAD bolts (DIN 933, 5.5 mm across flats),
+//                   self-tapping into printed pilot holes + paracord lanyard.
 //
 //  UNITS: millimetres.
 // ===========================================================================
@@ -22,6 +31,7 @@
 /* [Part to render / export] */
 part = "assembly";        // ["assembly","bezel","backplate","watch_mock"]
 show_watch = true;        // show the mock watch inside the assembly preview
+show_bolts = true;        // show mock hex bolts in the assembly preview
 
 /* [Watch size] */
 // 1st-gen Apple Watch came in two sizes. If unsure, measure the body height:
@@ -37,27 +47,30 @@ win_lip    = 2.2;         // how far the front window overlaps the watch edge (r
 wall       = 2.6;         // side-wall thickness beside the watch
 face_t     = 1.8;         // front face (bezel) thickness in front of the screen
 back_d     = 3.0;         // backplate thickness
-end_top    = 10.0;        // solid material above the watch (top screws)
-end_bot    = 16.0;        // solid material below the watch (bottom screws + lanyard)
-outer_r    = 4.0;         // outer corner radius of the brick
-edge_cham  = 0.8;         // small chamfer on outer edges (hand feel); 0 to disable
+end_top    = 8.0;         // solid material above the watch (top bolts)
+end_bot    = 14.0;        // solid material below the watch (bottom bolts + lanyard)
+outer_r    = 5.0;         // outer corner radius of the brick
+fillet_bez = 1.2;         // edge fillet radius on the bezel (0.4–1.6 sensible)
+fillet_bak = 1.0;         // edge fillet radius on the backplate
 
 /* [Openings] */
 back_win_d   = 0;         // central back window Ø (0 = auto: watch_w - 5)
 crown_cut_d  = 11.0;      // Digital Crown access opening Ø (right wall)
+crown_scallop= 2.5;       // extra Ø of the finger scallop around the crown (0 = off)
 crown_off_y  = 0;         // crown centre offset from watch mid-height (0 = auto)
 button_cut_w = 5.0;       // side-button slot width
 button_cut_h = 14.0;      // side-button slot length (along height)
 button_off_y = 0;         // button centre offset from watch mid-height (0 = auto)
 
 /* [Lanyard] */
-lanyard_d  = 5.5;         // transverse lanyard hole Ø at the bottom
+lanyard_d  = 5.0;         // transverse lanyard hole Ø (type-III paracord is ~4 mm)
 
-/* [Screws — M3 self-tapping into printed bosses by default] */
+/* [Bolts — M3 hex head (DIN 933), self-tapping into printed pilots] */
 screw_pilot_d = 2.5;      // pilot hole in the bezel (self-tap). Inserts? use 4.0
 screw_clear_d = 3.4;      // clearance hole through the backplate
-screw_head_d  = 6.2;      // counterbore Ø for the screw head
-screw_cbore   = 2.2;      // counterbore depth
+hex_af        = 5.5;      // bolt head size across flats (M3 DIN 933 = 5.5)
+hex_clr       = 0.40;     // pocket clearance on the across-flats size
+hex_seat      = 0.8;      // hex pocket depth; 2 mm head -> ~1.2 mm sits PROUD
 
 /* [Render quality] */
 $fn = 64;
@@ -91,12 +104,13 @@ win_r = max(1.0, watch_r - win_lip);
 
 zc = face_t + watch_d/2;                      // right-wall opening centre (thickness)
 
-// screw / lanyard positions (watch-centred coordinates)
-sx        = outer_w/2 - 5.0;
-sy_top    =  (watch_h/2 + tol + end_top*0.5);
-sy_bot    = -(watch_h/2 + tol + end_bot*0.42);
-lanyard_y = -(watch_h/2 + tol + end_bot*0.80);
-screw_pos = [[ sx, sy_top],[-sx, sy_top],[ sx, sy_bot],[-sx, sy_bot]];
+// bolt / lanyard positions (watch-centred coordinates)
+sx        = outer_w/2 - 5.2;
+sy        = watch_h/2 + tol + 3.6;            // bolts sit 3.6 mm into each end block
+lanyard_y = -(watch_h/2 + tol + end_bot*0.68);
+screw_pos = [[ sx, sy],[-sx, sy],[ sx,-sy],[-sx,-sy]];
+
+hex_r = (hex_af + hex_clr)/sqrt(3);           // hex pocket circumradius
 
 // ===========================================================================
 //  2D / 3D helpers
@@ -107,32 +121,45 @@ module rrect(w,h,r){
 }
 module slab(w,h,d,r){ linear_extrude(height=d) rrect(w,h,r); }
 
+// slab with ALL edges filleted by radius e (rounded-rect prism (+) sphere)
+module fslab(w,h,d,r,e){
+    if(e<=0) slab(w,h,d,r);
+    else minkowski(){
+        translate([0,0,e]) slab(w-2*e, h-2*e, d-2*e, max(0.6, r-e));
+        sphere(r=e, $fn=32);
+    }
+}
+
 // ===========================================================================
 //  PART: BEZEL (front tray)
 // ===========================================================================
 module bezel(){
     difference(){
-        // solid outer body
-        translate([0,outer_yc,0]) slab(outer_w, outer_h, bezel_d, outer_r);
+        // solid outer body, filleted edges
+        translate([0,outer_yc,0]) fslab(outer_w, outer_h, bezel_d, outer_r, fillet_bez);
         // watch pocket, open toward the back (+Z)
-        translate([0,0,face_t]) slab(pocket_w, pocket_h, pocket_d+1, pocket_r);
+        translate([0,0,face_t]) slab(pocket_w, pocket_h, pocket_d+2, pocket_r);
         // screen window through the front face
         translate([0,0,-0.5]) slab(win_w, win_h, face_t+1, win_r);
         // Digital Crown opening (right wall)
         translate([outer_w/2, _crown_off, zc])
             rotate([0,90,0]) cylinder(h=wall*4, d=crown_cut_d, center=true, $fn=48);
+        // finger scallop around the crown opening (cone sunk into the wall)
+        if(crown_scallop>0)
+            translate([outer_w/2+0.01, _crown_off, zc]) rotate([0,-90,0])
+                cylinder(h=1.6, d1=crown_cut_d+crown_scallop, d2=crown_cut_d, $fn=48);
         // side-button slot (right wall)
         translate([outer_w/2, _button_off, zc]) rotate([0,90,0])
             hull() for(iy=[-1,1])
                 translate([0, iy*(button_cut_h-button_cut_w)/2, 0])
                     cylinder(h=wall*4, d=button_cut_w, center=true, $fn=32);
-        // screw pilot holes (drilled from the back, blind at the front)
+        // bolt pilot holes (drilled from the back, blind at the front)
         for(p=screw_pos)
             translate([p[0],p[1], face_t+1.0])
                 cylinder(h=bezel_d, d=screw_pilot_d, $fn=24);
         // transverse lanyard hole through the bottom block
         translate([0, lanyard_y, bezel_d/2])
-            rotate([0,90,0]) cylinder(h=outer_w+2, d=lanyard_d, center=true, $fn=32);
+            rotate([0,90,0]) cylinder(h=outer_w+4, d=lanyard_d, center=true, $fn=32);
     }
 }
 
@@ -141,20 +168,22 @@ module bezel(){
 // ===========================================================================
 module backplate(){
     difference(){
-        translate([0,outer_yc,0]) slab(outer_w, outer_h, back_d, outer_r);
+        translate([0,outer_yc,0]) fslab(outer_w, outer_h, back_d, outer_r, fillet_bak);
         // central sensor / charging window
         translate([0,0,-0.5]) cylinder(h=back_d+1, d=_back_win, $fn=96);
-        // screw clearance + counterbore (heads recessed on the outer face)
+        // bolt clearance holes + shallow HEX seats on the outer face
+        //   (M3 hex heads drop in, sit ~1.2 mm proud for grip; the hex seat
+        //    keys them against rotation so they cannot self-loosen)
         for(p=screw_pos){
             translate([p[0],p[1],-0.5]) cylinder(h=back_d+1, d=screw_clear_d, $fn=32);
-            translate([p[0],p[1],back_d-screw_cbore])
-                cylinder(h=screw_cbore+0.5, d=screw_head_d, $fn=32);
+            translate([p[0],p[1],back_d-hex_seat])
+                cylinder(h=hex_seat+0.5, r=hex_r, $fn=6);
         }
     }
 }
 
 // ===========================================================================
-//  Mock watch (for the preview only — NOT printed)
+//  Mock watch & bolts (for the preview only — NOT printed)
 // ===========================================================================
 module watch_mock(){
     // body
@@ -170,6 +199,13 @@ module watch_mock(){
         rotate([0,90,0]) cylinder(h=1.6, d=4, $fn=32);
 }
 
+module bolt_mocks(){
+    for(p=screw_pos)
+        color("gainsboro")
+            translate([p[0],p[1], bezel_d+0.2+back_d-hex_seat])
+                cylinder(h=2.0, r=hex_af/sqrt(3), $fn=6);
+}
+
 // ===========================================================================
 //  Render selector
 // ===========================================================================
@@ -180,4 +216,5 @@ else {                                  // assembly preview
     color("darkolivegreen") bezel();
     color("olivedrab")      translate([0,0,bezel_d+0.2]) backplate();
     if(show_watch) color("gray") translate([0,0,face_t]) watch_mock();
+    if(show_bolts) bolt_mocks();
 }
