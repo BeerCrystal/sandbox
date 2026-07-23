@@ -62,7 +62,7 @@ crown_cut_d  = 11.5;      // Digital Crown access opening Ø (crown wall)
 crown_scallop= 2.5;       // extra Ø of the finger scallop around the crown (0 = off)
 crown_off_y  = 0;         // crown centre offset from watch mid-height (0 = auto)
 button_cut_w = 5.0;       // side-button slot width
-button_cut_h = 14.5;      // side-button slot length (along height)
+button_cut_h = 21.4;      // side-button slot length (along height)
 button_off_y = 0;         // button centre offset from watch mid-height (0 = auto)
 
 /* [Lanyard] */
@@ -90,11 +90,13 @@ watch_h = (WATCH_SIZE==38) ? 38.6 : 42.0;   // body height
 watch_d = 10.5;                              // body thickness (incl. curved back)
 watch_r = (WATCH_SIZE==38) ? 8.8 : 9.3;     // body corner radius (estimate — tune)
 
-// Digital Crown centre sits ~31% of body height down from the TOP edge, the
-// side button centre ~57.5% (derived from Series 0 profile photos; Apple
-// publishes no drawing). Offsets are from body mid-height, + = up.
-_crown_off  = (crown_off_y  != 0) ? crown_off_y  : (watch_h/2 - 0.310*watch_h);
-_button_off = (button_off_y != 0) ? button_off_y : (watch_h/2 - 0.575*watch_h);
+// Digital Crown centre ~26% of body height down from the TOP edge; the
+// button slot centre ~61% with the slot running well down the lower half.
+// (Started from Series 0 profile-photo proportions — Apple publishes no
+// drawing — then tuned against a physical 1st-gen watch via test prints.)
+// Offsets are from body mid-height, + = up.
+_crown_off  = (crown_off_y  != 0) ? crown_off_y  : (watch_h/2 - 0.262*watch_h);
+_button_off = (button_off_y != 0) ? button_off_y : (watch_h/2 - 0.612*watch_h);
 _back_win   = (back_win_d   != 0) ? back_win_d   : (watch_w - 5.0);
 
 pocket_w = watch_w + 2*tol;

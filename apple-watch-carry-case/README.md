@@ -99,11 +99,13 @@ commit to a full print:
    - ≈ **42.0 mm** → use `WATCH_SIZE = 42`
    (Or check the back engraving / Settings → General → About → Model.)
 
-2. **The Crown & side-button positions come from photo analysis, not an
-   official drawing** (Apple has never published one). Defaults put the crown
-   centre 31 % of the body height down from the top edge and the button centre
-   at 57.5 %. **Print the side gauge first** (5-minute print, below) to verify
-   both positions against your watch before printing the full bezel.
+2. **The Crown & side-button positions have been tuned against a physical
+   1st-gen watch** (Apple publishes no drawing; positions started from photo
+   analysis and were corrected through test prints). Defaults put the crown
+   centre 26 % of the body height down from the top edge, with the button
+   slot running from there to 87 % down. **Print the side gauge first**
+   (5-minute print, below) to confirm on your own watch before printing the
+   full bezel.
 
 Everything is parametric precisely so you can nudge these. Defaults are sane
 starting points, not guarantees.
@@ -261,6 +263,11 @@ drag the parameters and hit **Render → Export STL**.
 
 ### Changelog
 
+- **v4.1** — position tuning from a fit check on the physical watch: crown
+  opening moved **2 mm further up** (centre now 26 % of body height from the
+  top) and the thin slot portion of the keyhole **extended 5 mm further
+  down** (its top edge also raised slightly to stay cleanly merged with the
+  crown circle). Bezels and side gauges re-exported; backplates unchanged.
 - **v4** — **crown/button positions corrected** after a test print showed the
   crown hole too low. Two root causes: (a) control offsets were rough guesses
   — now set from Series 0 profile-photo proportions (crown centre 31 % of body
