@@ -48,12 +48,12 @@ Each hex head drops into a hex-shaped pocket on the backplate and sinks
 
 ## Ergonomics — will it disappear into a small/medium hand?
 
-Finished dimensions (42 mm watch): **42.4 × 65.3 × 16.7 mm**. For scale:
+Finished dimensions (42 mm watch): **41.9 × 64.8 × 16.7 mm**. For scale:
 
 | Object | Size (mm) |
 |--------|-----------|
 | Zippo lighter | 38 × 57 × 13 |
-| **This case (42 mm watch)** | **42.4 × 65.3 × 16.7** |
+| **This case (42 mm watch)** | **41.9 × 64.8 × 16.7** |
 | **This case (38 mm watch)** | **39.3 × 61.4 × 16.7** |
 | AirPods Pro case | 45 × 61 × 22 |
 | Car key fob (typical) | ~40 × 75 × 18 |
@@ -87,20 +87,23 @@ any face.
 
 ## ⚠️ Read this first — you must confirm two things
 
-I built this from the **published Series 0 body dimensions**, but I could not
+I built this from the **official 1st-gen body dimensions** (38 mm:
+38.6 × 33.3 × 10.5; 42 mm: 42.0 × 35.9 × 10.5 — note the 42 mm *first-gen*
+body is smaller than the 42.5 × 36.4 Series 1–3 case), but I could not
 measure *your* watch or *your* printer. Two things need your eyes before you
 commit to a full print:
 
 1. **Which size is your watch — 38 mm or 42 mm?**
    Measure the aluminum body height (top to bottom, ignore the band):
    - ≈ **38.6 mm** → use `WATCH_SIZE = 38`
-   - ≈ **42.5 mm** → use `WATCH_SIZE = 42`
+   - ≈ **42.0 mm** → use `WATCH_SIZE = 42`
    (Or check the back engraving / Settings → General → About → Model.)
 
-2. **The Crown & side-button positions are estimated.** Their exact height on
-   the body is my best estimate. The openings are made generous to be forgiving,
-   but **print the test ring first** (below) to verify before printing the whole
-   case.
+2. **The Crown & side-button positions come from photo analysis, not an
+   official drawing** (Apple has never published one). Defaults put the crown
+   centre 31 % of the body height down from the top edge and the button centre
+   at 57.5 %. **Print the side gauge first** (5-minute print, below) to verify
+   both positions against your watch before printing the full bezel.
 
 Everything is parametric precisely so you can nudge these. Defaults are sane
 starting points, not guarantees.
@@ -112,8 +115,8 @@ starting points, not guarantees.
 ```
 apple_watch_carry_case.scad   ← the parametric source (edit this)
 stl/
-  bezel_38mm.stl     backplate_38mm.stl
-  bezel_42mm.stl     backplate_42mm.stl
+  bezel_38mm.stl     backplate_38mm.stl     side_gauge_38mm.stl
+  bezel_42mm.stl     backplate_42mm.stl     side_gauge_42mm.stl
 img/                            ← reference renders
 ```
 
@@ -185,18 +188,23 @@ lanyard_d  = 5.0; // paracord hole Ø (type-III paracord ≈ 4 mm)
 
 ---
 
-## Print a cheap test first (recommended)
+## Print the cheap tests first (recommended)
 
-Before the full case, slice **only the bezel** and print just the **first
-~4 mm** (stop the print early, or set a low object height in your slicer). Drop
-the watch in to check:
+**1. The side gauge (5 min, verifies crown/button positions).** Print
+`side_gauge_<size>mm.stl` — a 2 mm plate exactly as tall as the watch body,
+with the crown hole and button slot at the exact positions the bezel uses.
+Hold it against the crown side of the watch with the plate's ends flush with
+the body's top and bottom edges (the chamfered corner marks the TOP). The
+crown must centre in the round hole and the button in the slot. If either is
+off, measure the miss in mm and add it to `crown_off_y` / `button_off_y`
+(positive = toward the top of the watch), re-export, re-check.
 
-1. Does the body **seat fully** with a snug, no-rattle fit? → tune `tol`.
-2. Do the **Crown and button openings line up**? → tune `crown_off_y` /
-   `button_off_y`.
+**2. The pocket fit (~30 min).** Slice **only the bezel** and print just the
+**first ~4 mm** (stop the print early, or set a low object height in your
+slicer). Drop the watch in: it should seat fully with a snug, no-rattle fit
+→ tune `tol` if not.
 
-Re-export and reprint the test until both are right, *then* commit to the full
-bezel + backplate.
+Then commit to the full bezel + backplate.
 
 ---
 
@@ -234,9 +242,12 @@ drag the parameters and hit **Render → Export STL**.
 
 ## Design notes / honest limitations
 
-- **Body dimensions** are the official Series 0 figures (38 mm: 33.3 × 38.6 ×
-  10.5 mm; 42 mm: 36.4 × 42.5 × 10.5 mm). **Corner radius, Crown height, and
-  button height are estimated** and exposed as parameters for you to correct.
+- **Body dimensions** are the official 1st-gen figures (38 mm: 33.3 × 38.6 ×
+  10.5 mm; 42 mm: 35.9 × 42.0 × 10.5 mm — the 42.5 × 36.4 numbers floating
+  around online are the Series 1–3 case, 0.5 mm larger). **Corner radius,
+  Crown height, and button height are estimated** and exposed as parameters
+  for you to correct — Apple publishes body outlines but no control-position
+  drawing, so verify with the printed side gauge.
 - The Series 0 back is **slightly domed**; the central window gives it clearance
   and lets the charger through. If the fit is loose front-to-back, a thin
   adhesive foam pad on the inside of the backplate takes up the slack nicely.
@@ -250,6 +261,16 @@ drag the parameters and hit **Render → Export STL**.
 
 ### Changelog
 
+- **v4** — **crown/button positions corrected** after a test print showed the
+  crown hole too low. Two root causes: (a) control offsets were rough guesses
+  — now set from Series 0 profile-photo proportions (crown centre 31 % of body
+  height from the top, button 57.5 %), moving the crown ~4.6 mm up; (b) the
+  42 mm body was modelled at 42.5 × 36.4 (Series 1–3 size) — corrected to the
+  official 1st-gen 42.0 × 35.9, which also improves pocket fit. Added a
+  5-minute **printable side gauge** to verify positions against the physical
+  watch before printing the full bezel. Openings enlarged slightly for
+  forgiveness. (42 mm backplate bolt holes moved 0.25 mm inboard; a
+  previously printed v3 backplate still fits within the bolt-hole clearance.)
 - **v3.1** — **fixed mirrored bezel**: the crown/button openings were cut on
   the wrong wall (the internal preview couldn't catch it because the mock
   watch shared the same mirrored frame). The Digital Crown opening is now on

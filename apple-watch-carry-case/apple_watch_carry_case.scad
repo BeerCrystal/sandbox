@@ -32,7 +32,7 @@
 // ===========================================================================
 
 /* [Part to render / export] */
-part = "assembly";        // ["assembly","bezel","backplate","watch_mock"]
+part = "assembly";        // ["assembly","bezel","backplate","watch_mock","side_gauge"]
 show_watch = true;        // show the mock watch inside the assembly preview
 show_bolts = true;        // show mock hex bolts in the assembly preview
 
@@ -58,11 +58,11 @@ fillet_bak = 1.0;         // edge fillet radius on the backplate
 
 /* [Openings] */
 back_win_d   = 0;         // central back window Ø (0 = auto: watch_w - 5)
-crown_cut_d  = 11.0;      // Digital Crown access opening Ø (right wall)
+crown_cut_d  = 11.5;      // Digital Crown access opening Ø (crown wall)
 crown_scallop= 2.5;       // extra Ø of the finger scallop around the crown (0 = off)
 crown_off_y  = 0;         // crown centre offset from watch mid-height (0 = auto)
 button_cut_w = 5.0;       // side-button slot width
-button_cut_h = 14.0;      // side-button slot length (along height)
+button_cut_h = 14.5;      // side-button slot length (along height)
 button_off_y = 0;         // button centre offset from watch mid-height (0 = auto)
 
 /* [Lanyard] */
@@ -79,16 +79,22 @@ hex_seat      = 2.4;      // hex pocket depth; 2 mm head sinks ~0.4 mm SUB-FLUSH
 $fn = 64;
 
 // ===========================================================================
-//  DERIVED DIMENSIONS  (official Series 0 body sizes; corner radius estimated)
+//  DERIVED DIMENSIONS
+//  Body sizes from Apple's official 1st-gen (A1553/A1554) spec sheets:
+//    38 mm: 38.6 x 33.3 x 10.5      42 mm: 42.0 x 35.9 x 10.5
+//  NOTE the 42 mm 1st-gen body is 42.0 x 35.9 — the often-quoted
+//  42.5 x 36.4 is the *Series 1-3* case, which is 0.5 mm larger.
 // ===========================================================================
-watch_w = (WATCH_SIZE==38) ? 33.3 : 36.4;   // body width
-watch_h = (WATCH_SIZE==38) ? 38.6 : 42.5;   // body height
+watch_w = (WATCH_SIZE==38) ? 33.3 : 35.9;   // body width
+watch_h = (WATCH_SIZE==38) ? 38.6 : 42.0;   // body height
 watch_d = 10.5;                              // body thickness (incl. curved back)
-watch_r = (WATCH_SIZE==38) ? 8.8 : 9.6;     // body corner radius (estimate — tune)
+watch_r = (WATCH_SIZE==38) ? 8.8 : 9.3;     // body corner radius (estimate — tune)
 
-// crown high on the right side, button just below it (estimates — tune)
-_crown_off  = (crown_off_y  != 0) ? crown_off_y  : ((WATCH_SIZE==38) ?  3.0 :  3.5);
-_button_off = (button_off_y != 0) ? button_off_y : ((WATCH_SIZE==38) ? -7.0 : -8.0);
+// Digital Crown centre sits ~31% of body height down from the TOP edge, the
+// side button centre ~57.5% (derived from Series 0 profile photos; Apple
+// publishes no drawing). Offsets are from body mid-height, + = up.
+_crown_off  = (crown_off_y  != 0) ? crown_off_y  : (watch_h/2 - 0.310*watch_h);
+_button_off = (button_off_y != 0) ? button_off_y : (watch_h/2 - 0.575*watch_h);
 _back_win   = (back_win_d   != 0) ? back_win_d   : (watch_w - 5.0);
 
 pocket_w = watch_w + 2*tol;
@@ -204,6 +210,32 @@ module watch_mock(){
         rotate([0,-90,0]) cylinder(h=1.6, d=4, $fn=32);
 }
 
+// ===========================================================================
+//  PART: SIDE GAUGE — 5-minute test print to verify crown/button positions
+//  A thin plate exactly as tall as the watch body. Hold it against the
+//  crown side of the watch, ends flush with the body top/bottom edges:
+//  the crown must centre in the round hole, the button in the slot.
+//  If not, measure the miss and adjust crown_off_y / button_off_y.
+// ===========================================================================
+module side_gauge(){
+    gw = 16; gt = 2.0;
+    difference(){
+        linear_extrude(gt) rrect(gw, watch_h, 2);
+        // crown + button apertures at the exact case-cut positions
+        translate([0, _crown_off, -0.5]) cylinder(h=gt+1, d=crown_cut_d, $fn=48);
+        translate([0, _button_off, -0.5]) linear_extrude(gt+1)
+            hull() for(iy=[-1,1])
+                translate([0, iy*(button_cut_h-button_cut_w)/2])
+                    circle(d=button_cut_w, $fn=32);
+        // chamfered corner marks the TOP edge
+        translate([-gw/2, watch_h/2, -0.5])
+            linear_extrude(gt+1) rotate(45) square(6, center=true);
+        // engraved size label
+        translate([0, -watch_h/2+6, gt-0.6]) linear_extrude(1)
+            text(str(WATCH_SIZE), size=5, halign="center", font="DejaVu Sans:style=Bold");
+    }
+}
+
 module bolt_mocks(){
     for(p=screw_pos)
         color("gainsboro")
@@ -217,6 +249,7 @@ module bolt_mocks(){
 if(part=="bezel")          bezel();
 else if(part=="backplate") backplate();
 else if(part=="watch_mock") watch_mock();
+else if(part=="side_gauge") side_gauge();
 else {                                  // assembly preview
     color("darkolivegreen") bezel();
     color("olivedrab")      translate([0,0,bezel_d+0.2]) backplate();
