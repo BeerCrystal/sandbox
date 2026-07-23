@@ -155,6 +155,9 @@ win_lip    = 2.2;  // how far the front frame overlaps the watch edge
 
 - **Watch rattles / too loose** → lower `tol` toward `0.25`.
 - **Watch won't seat / too tight** → raise `tol` toward `0.55`.
+- **Length/width fit but it jams at the corners** → the pocket corners are
+  rounder than the watch body; lower `watch_r` (defaults 6.5 / 6.0 after
+  physical fit testing — the aluminium body is squarer than it looks).
 - **Backplate won't pull flush** → raise `depth_tol`.
 - **Frame covers part of the screen** → lower `win_lip` (but keep ≥ 1.5 mm so it
   still retains the watch).
@@ -263,6 +266,10 @@ drag the parameters and hit **Render → Export STL**.
 
 ### Changelog
 
+- **v5.2** — **pocket corners squared** after a fit test: the body corner
+  radius estimate (9.3 mm) was too round and blocked the watch at the four
+  diagonals even though length/width fit. Now 6.5 mm (42) / 6.0 mm (38),
+  exposed as `watch_r`. Outer shell unchanged — only the bezels re-exported.
 - **v5.1** — seam squared off: edge fillets now stop at the parting plane, so
   the bezel and backplate meet flush with straight sides (the v5 all-edge
   fillet left a V-groove around the middle). Round-overs remain on the front

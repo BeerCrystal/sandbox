@@ -88,7 +88,11 @@ $fn = 64;
 watch_w = (WATCH_SIZE==38) ? 33.3 : 35.9;   // body width
 watch_h = (WATCH_SIZE==38) ? 38.6 : 42.0;   // body height
 watch_d = 10.5;                              // body thickness (incl. curved back)
-watch_r = (WATCH_SIZE==38) ? 8.8 : 9.3;     // body corner radius (estimate — tune)
+// body corner radius: the aluminium body is squarer than it looks — an
+// early estimate of ~9 mm blocked insertion at the diagonals on a real
+// watch. If the watch still won't drop in while length/width fit, lower
+// this further; if the pocket gapes at the corners, raise it.
+watch_r = (WATCH_SIZE==38) ? 6.0 : 6.5;
 
 // Digital Crown centre ~26% of body height down from the TOP edge; the
 // button slot centre ~61% with the slot running well down the lower half.
