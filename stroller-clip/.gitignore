@@ -1,6 +1,5 @@
 # Generated STLs. The previews are kept because the README links them.
 build/*
 !build/assembly.png
-!build/jaw-seated.png
-!build/jaw-raised.png
-!build/cap.png
+!build/front.png
+!build/raised.png

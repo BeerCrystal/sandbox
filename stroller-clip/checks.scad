@@ -1,5 +1,5 @@
 // =====================================================================
-//  Fit checks. Nothing here is printable -- they exist so a clearance
+//  Fit checks. Nothing here is printable — they exist so a clearance
 //  mistake shows up on screen rather than on the bed.
 //
 //    make check
@@ -9,62 +9,52 @@
 
 include <stroller_clip.scad>
 
-check = "seated";   // [seated, raised, release, mount, lift]
+check = "hook_bar";
+// [hook_bar, claw_bar, pieces, mount, cup_bars, liftoff]
 
-// --- the clip against the bar ---------------------------------------
+// --- each piece against its own bar ----------------------------------
 
-// Seated and locked: the bar sits at the top of the slot, under the
-// cap. Contact, but no interference.
-module check_seated() {
-    intersection() { clip(); handle_bar(); }
+// The hook rests ON the arc, so this is contact, not overlap.
+module check_hook_bar() { intersection() { hook_part(); arc_bar(); } }
+
+// At rest the arm sits inside the claw's bore with clearance. The click
+// only interferes while the bar is passing through the mouth, which is
+// a different position, so at rest this must be clean.
+module check_claw_bar() { intersection() { claw_placed(); arm_bar(); } }
+
+// --- the two pieces against each other -------------------------------
+
+// They meet face to face at joint_z. Overlap here would mean the pads
+// cannot close, and the bolts would just spring the joint apart.
+module check_pieces() { intersection() { hook_part(); claw_placed(); } }
+
+module check_mount() { intersection() { hook_part(); cupholder(); } }
+
+// The cup hangs inboard and below; it must miss both bars.
+module check_cup_bars() {
+    intersection() { cupholder(); union() { arc_bar(); arm_bar(); } }
 }
 
-// Raised by slide_travel: the bar drops to the bottom of the slot and
-// lines up with the mouth. If this is not empty the clip cannot be
-// lifted far enough to come off.
-module check_raised() {
-    intersection() {
-        translate([0, slide_travel, 0]) clip();
-        handle_bar();
-    }
-}
+// --- taking it off ---------------------------------------------------
 
-// Pulling the raised clip off sideways. The bar has to squeeze through
-// the mouth, so a band of interference across the mouth is EXPECTED --
-// that is the click. What must be empty is the cap: if the cap fouls
-// the bar on the way out, the clip is trapped.
-//
-// So this checks the cap station alone, not the jaw.
-module check_release() {
-    intersection() {
-        for (dx = [0 : 2 : bore_w + wall + 6])
-            translate([dx, slide_travel, 0])
-                translate([0, 0, cap_z0]) linear_extrude(cap_len) cap_2d();
-        handle_bar();
-    }
-}
-
-// --- the attachment against the clip --------------------------------
-
-module check_mount() { intersection() { clip(); cupholder(); } }
-
-// Stepping the attachment straight up off the hook traces the whole
-// removal path. Stepped union rather than hull() -- these shapes are
+// Slide the caddy up ALONG the arm and the hook has to lift clear of
+// the arc. Stepped union rather than hull() — these shapes are
 // non-convex, and the convex hull of two poses sweeps through material
 // the part never actually occupies.
-lift_mm   = 26;
-lift_step = 1;
+lift_mm   = 30;
+lift_step = 1.5;
 
-module check_lift() {
+module check_liftoff() {
     intersection() {
-        clip();
-        for (dy = [0 : lift_step : lift_mm])
-            translate([0, dy, 0]) cupholder();
+        arc_bar();
+        for (d = [0 : lift_step : lift_mm])
+            translate([d * sin(arm_tilt), d * cos(arm_tilt), 0]) hook_part();
     }
 }
 
-if      (check == "seated")  check_seated();
-else if (check == "raised")  check_raised();
-else if (check == "release") check_release();
-else if (check == "mount")   check_mount();
-else if (check == "lift")    check_lift();
+if      (check == "hook_bar") check_hook_bar();
+else if (check == "claw_bar") check_claw_bar();
+else if (check == "pieces")   check_pieces();
+else if (check == "mount")    check_mount();
+else if (check == "cup_bars") check_cup_bars();
+else if (check == "liftoff")  check_liftoff();
