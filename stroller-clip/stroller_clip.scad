@@ -1,104 +1,109 @@
 // =====================================================================
-//  Chicco Corso — corner caddy. Hooks over the top arc, clips to the
-//  side arm, carries a cup inboard.
+//  Chicco Corso — corner caddy. One piece. Snaps onto the side arm,
+//  slides down, and locks under the top arc.
 //
 //  World frame, standing behind the stroller:
 //      +X   along the top arc, toward the middle of the handle
 //      +Y   up
 //      +Z   inboard, toward the seat. The cup hangs this way.
 //  The handle's U lies in the XY plane. The arc runs along X; the side
-//  arm hangs down from the corner, leaning out by arm_tilt.
+//  arm hangs from the corner, leaning out by arm_tilt.
 //
-//  The hook sits at the ORIGIN, on the arc. The claw sits at
-//  (-nom_run, -nom_drop), on the arm.
-//
-//  ---------------------------------------------------------------
-//  !! EVERY HANDLE DIMENSION BELOW IS AN UNMEASURED PLACEHOLDER.   !!
-//  ---------------------------------------------------------------
+//  The hook sits at the ORIGIN on the arc. The claw sits at
+//  (-nom_run, -nom_drop) on the arm. The model is drawn SEATED.
 //
 //  HOW IT WORKS
+//    On:  hold it high so the hook clears the arc, snap the claw onto
+//         the side arm, slide down until the hook seats on the arc.
+//    Off: slide up until the hook lifts clear, then unsnap.
+//
 //    The hook is an inverted U resting on top of the arc. It carries
-//    the weight and sets the height: sliding the caddy down the arm
-//    stops when the hook bottoms out on the arc. That is what keeps
-//    the side clip from slipping down.
+//    the weight and sets the height — sliding down stops when it
+//    bottoms out, which is what keeps the caddy from slipping down the
+//    arm. The claw is a light snap; because the arm is tilted, the claw
+//    slides freely ALONG it, and that is where the travel comes from.
 //
-//    The claw is a light snap around the side arm. Because the arm is
-//    tilted, the claw slides freely ALONG it, and that is where the
-//    up-and-down travel comes from. No slot needed anywhere.
+//  WHY IT LOCKS
+//    Each grip blocks the direction the other releases in.
+//      - The hook straddles the arc front-to-back, so front-to-back is
+//        what it constrains: 0.4 mm of play.
+//      - The claw's mouth points REARWARD, into that constraint. It
+//        cannot open while the hook is seated.
+//      - The claw wraps the arm side-to-side, stopping the caddy
+//        sliding along the arc.
+//      - Down is stopped by the hook resting on the bar.
+//    Up is the only motion left, and that is the intended release.
 //
-//    On:  hold it high so the hook clears the arc, click the claw onto
-//         the arm, slide down until the hook seats.
-//    Off: slide up until the hook lifts clear, then unclick.
+//    Point the mouth any other way and this falls apart — outboard, and
+//    the whole caddy pulls straight off sideways with the hook still
+//    seated. The mouth direction IS the lock.
 //
-//    It locks because the two grips wrap bars that are not parallel.
-//    With the hook down over the arc, the caddy cannot translate away
-//    from the arm to release the claw without the hook binding on the
-//    arc. Neither snap carries load, so neither has to be tight.
+//    Neither snap carries load, so neither has to be tight.
 //
-//  WHY TWO PIECES
-//    The hook is a prism about a bar running along X; the claw is a
-//    prism about one running roughly along Y. Prisms 90 degrees apart
-//    cannot both print support-free in one piece. Splitting them also
-//    makes the corner adjustable, which matters because the bend is
-//    the one thing that is genuinely hard to measure: the slotted
-//    joint lets you set it on the stroller instead.
+//  ANGLES
+//    One piece means the corner geometry is baked in, so nom_run,
+//    nom_drop and arm_tilt have to be right. Two things make that
+//    easier than it sounds:
+//      - The claw slides along the arm, so error ALONG the arm just
+//        parks the caddy slightly higher or lower. Self-correcting.
+//        Only the PERPENDICULAR offset matters.
+//      - A short claw tolerates angle error. Misalignment across the
+//        bore is about claw_len * sin(error)/2, so at claw_len = 20 a
+//        5-degree error is 0.9 mm, which the clearance absorbs.
 //
 //  PRINTING
-//    Each piece is exported standing on its own bar axis. No supports.
+//    Exported standing on the arm axis. The claw is then a true
+//    vertical prism, the strut and throat are vertical walls, and the
+//    throat opens upward. The only overhang is the hook's top plate,
+//    which bridges the bar channel — a routine 24 mm bridge.
 // =====================================================================
 
-part = "hook";   // [hook, claw, cupholder, testfit, assembly, all]
+part = "caddy";  // [caddy, cupholder, testfit, assembly, all]
 
 $fn = 96;
 
 // --- the two bars ----------------------------------------------------
-// Each measured perpendicular to its own axis.
+// MEASURED on a Corso, 2026-08. One continuous 29 x 19 mm oval tube:
+// bare on the side arm, wrapped in ~2-3 mm of rubber on the top arc
+// (35 - 29 = 3 mm per side, 23 - 19 = 2 mm per side).
+//
+// The bend happens IN the handle plane, so the 19 mm axis stays
+// front-to-back the whole way round, while the 29 mm axis rotates from
+// vertical on the arc to side-to-side on the arm. That is why arc_h and
+// arm_w are the same number wearing different hats.
 
-arc_w    = 30;   // top arc: width, measured along Z (front to back)  ***
-arc_h    = 26;   // top arc: height, top to bottom                    ***
-arc_r    = 11;   // corner radius                                     ***
+arc_w    = 23;   // top arc, over the rubber: front to back
+arc_h    = 35;   // top arc, over the rubber: top to bottom
+arc_r    = 11.5; // stadium ends — half the short axis
 
-arm_w    = 28;   // side arm: width in the handle plane               ***
-arm_h    = 28;   // side arm: depth, front to back                    ***
-arm_r    = 14;   // corner radius (= w/2 if round)                    ***
+arm_w    = 29;   // side arm, bare metal: across the handle plane
+arm_h    = 19;   // side arm, bare metal: front to back
+arm_r    = 9.5;  // stadium ends — half the short axis
 
 fit      = 0.4;  // clearance to the bars
+arm_slop = 0.35; // extra room in the claw, to absorb angle error
 wall     = 4;
 
-// --- corner geometry -------------------------------------------------
-// Nominal only — the slotted joint absorbs the error, so these just
-// need to be close. Measure roughly, with a tape, from the spot on the
-// arc where you want the hook to the spot on the arm where you want
-// the claw.
+// --- corner geometry --- *** STILL NOMINAL — MEASURE THESE *** -------
+// From the spot on the arc where the hook goes, to the spot on the arm
+// where the claw goes. Only the component perpendicular to the arm
+// really matters; see ANGLES above.
 
 nom_run   = 70;  // horizontal, hook to claw
 nom_drop  = 90;  // vertical,   hook to claw
 arm_tilt  = 12;  // degrees the arm leans out from vertical
 
-// --- hook (over the arc) ---------------------------------------------
+// --- hook and claw ---------------------------------------------------
 
-hook_len    = 34;  // along the arc
-hook_engage = 10;  // how far the legs reach down past the shoulder
-
-// --- claw (around the arm) -------------------------------------------
-
-claw_len   = 30;   // along the arm
-claw_frac  = 0.90; // mouth width as a fraction of arm_w. The click.
-                   // It holds nothing but itself, so it stays light.
-
-// --- adjustable joint ------------------------------------------------
-// Two flat pads meeting face to face in a plane parallel to the handle
-// plane, clear of both bars. Slots run at right angles to each other,
-// giving two axes of adjustment plus a few degrees of swivel.
-
-joint_t     = 5;    // thickness of each pad
-slot_len    = 18;   // adjustment range per axis
-joint_pitch = 26;   // bolt spacing
-bolt_r      = 1.75; // M3 clearance
+hook_len    = 34;   // along the arc
+hook_engage = 10;   // how far the legs reach down past the arc's top
+claw_len    = 20;   // along the arm — short, for angle tolerance
+claw_frac   = 0.90; // mouth width as a fraction of arm_w. The click.
+strut_t     = 6;
 
 // --- attachment interface -------------------------------------------
 
-mnt_y      = -14;   // underside of the throat arm
+mnt_y      = -14;
 mnt_t      = 5;
 mnt_reach  = 15;
 mnt_rise   = 15;
@@ -126,21 +131,19 @@ drain_r    = 9;
 
 arc_top   = arc_h / 2 + fit;
 hook_bot  = arc_top - hook_engage;
-hook_out  = arc_w / 2 + fit + wall;      // outer face of the hook legs
+hook_out  = arc_w / 2 + fit + wall;
 
-claw_bore = arm_w + 2 * fit;
-claw_deep = arm_h + 2 * fit;
-claw_out  = claw_deep / 2 + wall;        // how far the claw stands off in Z
+claw_bore = arm_w + 2 * (fit + arm_slop);   // across the handle plane
+claw_deep = arm_h + 2 * (fit + arm_slop);   // front to back
+claw_out  = claw_deep / 2 + wall;
 claw_mouth = arm_w * claw_frac;
 
-// The joint plane has to clear the widest thing near it, which is the
-// claw body, not the bars.
-claw_pad_z0 = claw_out - 3;              // buried in the claw body
-joint_gap   = 0.2;                       // clearance in the lap joint
-joint_z     = claw_out + 1.6;            // the mating face
-strut_z1    = joint_z + joint_t;         // top of the hook's strut
+// The strut runs inboard of BOTH bars, so it crosses the corner without
+// fouling either.
+strut_z0  = arc_w / 2 + fit;
+strut_z1  = strut_z0 + strut_t;
 
-mnt_z0     = strut_z1;                   // throat root, outboard of it all
+mnt_z0     = strut_z1;
 throat_y   = mnt_y + mnt_t;
 throat_top = throat_y + mnt_rise;
 tip_inner  = mnt_z0 + mnt_reach - mnt_t;
@@ -157,29 +160,20 @@ cheek_x    = hook_len / 2 + cheek_gap + cheek_t / 2;
 cup_or     = cup_id / 2 + ring_wall;
 cup_cz     = spine_z + spine_t + cup_or - 3;
 
-// Where the joint sits, and which way the strut runs.
-joint_ang  = atan2(-nom_drop, -nom_run);
+// =====================================================================
+//  Sanity. An undefined name silently becomes undef in OpenSCAD and
+//  linear_extrude(undef) quietly builds something enormous instead of
+//  failing, so these guard the values the geometry depends on.
+// =====================================================================
 
-// --- sanity ----------------------------------------------------------
-// An undefined name silently becomes undef in OpenSCAD, and
-// linear_extrude(undef) quietly builds something enormous rather than
-// failing. These catch that, and the geometry mistakes that look fine
-// in preview.
-
-assert(is_num(joint_gap) && is_num(joint_z) && is_num(claw_pad_z0),
-       "joint constants must all be numbers");
-assert(claw_pad_z0 < joint_z - joint_gap,
-       "claw pad has no thickness -- check claw_out and joint_z");
-assert(joint_z > claw_out,
-       "the joint plane is inside the claw body");
-assert(joint_pad_r >= slot_len / 2 + bolt_r + 2,
-       "joint pad is too small to contain its slot at full travel");
-assert(hook_bot < arc_top,
-       "hook_engage is too small for the legs to grip anything");
-assert(claw_mouth < arm_w,
-       "claw mouth is wider than the arm -- it would not click on");
-assert(tongue_t > 0 && throat_w > 0,
-       "throat is degenerate -- check mnt_reach against mnt_t");
+assert(is_num(strut_z0) && is_num(claw_out) && is_num(hook_out),
+       "core constants must all be numbers");
+assert(strut_z0 >= arc_w / 2 + fit,  "strut would foul the top arc");
+assert(strut_z0 > arm_h / 2,         "strut would foul the side arm");
+assert(strut_z1 > claw_out - wall,   "strut misses the claw body");
+assert(hook_bot < arc_top,           "hook legs grip nothing");
+assert(claw_mouth < arm_w,           "claw mouth is wider than the arm");
+assert(tongue_t > 0 && throat_w > 0, "throat is degenerate");
 
 // =====================================================================
 //  Helpers
@@ -198,142 +192,95 @@ module box(x0, y0, x1, y1) {
         square([abs(x1 - x0), abs(y1 - y0)]);
 }
 
-// Round-ended slot, so a bolt can slide along it.
-module slot(len, r) {
-    hull() for (s = [-1, 1]) translate([s * len / 2, 0]) circle(r = r);
+// Everything belonging to the claw is drawn about the origin and moved
+// onto the arm by this.
+module at_arm() {
+    translate([-nom_run, -nom_drop, 0]) rotate([0, 0, -arm_tilt])
+        children();
 }
 
-// The pair of bolt slots at the joint, lying in the XY plane, centred
-// on the joint and elongated along `ang`.
-module joint_slots(ang) {
-    for (s = [-1, 1])
-        translate([-nom_run, -nom_drop] +
-                  s * joint_pitch / 2 * [cos(joint_ang + 90),
-                                         sin(joint_ang + 90)])
-            rotate([0, 0, ang]) slot(slot_len, bolt_r);
-}
-
-// --- the handle, for fit checks. Not a printed part. -----------------
+// --- the handle, for fit checks. Not printed. ------------------------
 
 module arc_bar(len = 300) {
     rotate([0, 90, 0]) linear_extrude(len, center = true)
         rrect(arc_w, arc_h, arc_r);
 }
 
-// Hangs from the corner downward only, so the preview does not show it
-// running up through the arc.
 module arm_bar(len = 240, up = 40) {
-    translate([-nom_run, -nom_drop, 0]) rotate([0, 0, -arm_tilt])
-        translate([0, up, 0]) rotate([90, 0, 0])
-            linear_extrude(len) rrect(arm_w, arm_h, arm_r);
+    at_arm() translate([0, up, 0]) rotate([90, 0, 0])
+        linear_extrude(len) rrect(arm_w, arm_h, arm_r);
 }
 
 // =====================================================================
-//  Piece 1 — hook, strut and attachment throat
-//
-//  The hook and throat are one prism about the arc. The strut is a flat
-//  plate lying parallel to the handle plane, outboard of both bars, so
-//  it reaches diagonally down to the joint without fouling anything.
+//  The caddy — one piece
 // =====================================================================
 
-// Cross-section of the arc bar: local x is world Z, local y is world Y.
-module arc_section(grow = 0) {
-    rrect(arc_w + 2 * fit + 2 * grow, arc_h + 2 * fit + 2 * grow,
-          arc_r + fit + grow);
-}
-
+// Hook and throat, drawn in the arc's cross-section: local x -> world Z,
+// local y -> world Y, extruded along the arc.
 module hook_profile() {
-    // inverted U over the bar
-    box(-hook_out, hook_bot, hook_out, arc_top + wall);
-    // throat for attachments, hung off the outboard side
-    box(mnt_z0 - 1,  mnt_y,    tip_outer, throat_y);
-    box(tip_inner,   throat_y, tip_outer, throat_top);
-    // web tying the throat back to the hook
-    box(hook_out - 2, mnt_y, mnt_z0, arc_top + wall);
+    box(-hook_out, hook_bot, hook_out, arc_top + wall);      // inverted U
+    // Web tying the throat back to the hook. It starts at strut_z0, not
+    // inside it: any material within the arc's envelope is hidden by
+    // the bar cut while seated, then fouls the bar on the way off.
+    box(strut_z0, mnt_y, mnt_z0, arc_top + wall);
+    box(mnt_z0 - 1, mnt_y, tip_outer, throat_y);             // throat arm
+    box(tip_inner, throat_y - 1, tip_outer, throat_top);     // upturned tip
 }
 
-// Big enough to contain both slots at full travel, with meat left over.
-joint_pad_r = slot_len / 2 + bolt_r + 4;
-
-module joint_pad_2d() {
-    hull() for (s = [-1, 1])
-        translate([-nom_run, -nom_drop] +
-                  s * joint_pitch / 2 * [cos(joint_ang + 90),
-                                         sin(joint_ang + 90)])
-            circle(r = joint_pad_r);
+module hook_and_throat() {
+    rotate([0, -90, 0]) linear_extrude(hook_len, center = true)
+        hook_profile();
 }
 
+// A flat plate lying inboard of both bars, crossing the corner.
 module strut_2d() {
-    hull() { translate([0, -6]) circle(r = 15); joint_pad_2d(); }
-}
-
-module hook_part() {
-    difference() {
-        union() {
-            rotate([0, -90, 0]) linear_extrude(hook_len, center = true)
-                hook_profile();
-            translate([0, 0, joint_z]) linear_extrude(joint_t) strut_2d();
-        }
-        // the bar itself
-        rotate([0, -90, 0]) linear_extrude(hook_len + 2, center = true)
-            arc_section();
-        // slots, elongated along the strut
-        translate([0, 0, joint_z - 1])
-            linear_extrude(joint_t + 2) joint_slots(joint_ang);
+    hull() {
+        rrect(28, 34, 8);
+        translate([-nom_run, -nom_drop]) circle(r = claw_out);
     }
 }
 
-// =====================================================================
-//  Piece 2 — claw
-//
-//  A prism about the arm. Drawn upright at the origin of its own frame
-//  (local x -> world X, local y -> world -Z, extruded along world Y),
-//  then tilted and moved onto the arm.
-// =====================================================================
+module strut() {
+    translate([0, 0, strut_z0]) linear_extrude(strut_t) strut_2d();
+}
 
+// Claw, drawn in the arm's cross-section: local x -> world X (across the
+// handle plane), local y -> world -Z (front to back).
 module claw_profile() {
-    difference() {
-        rrect(claw_bore + 2 * wall, claw_deep + 2 * wall, arm_r + fit + wall);
-        rrect(claw_bore, claw_deep, arm_r + fit);
-        // mouth opens outboard, away from the stroller, so the caddy is
-        // pushed on from outside and the load never pulls in line with
-        // the gap
-        box(-claw_bore, -claw_mouth / 2, 0, claw_mouth / 2);
-    }
+    rrect(claw_bore + 2 * wall, claw_deep + 2 * wall, arm_r + fit + wall);
 }
 
-// The pad is buried in the claw body and stands proud of it to form the
-// mating face. Drawn in the XY plane, at the joint's Z.
-module claw_pad_2d() { translate([nom_run, nom_drop]) joint_pad_2d(); }
-
-module claw_part() {
-    difference() {
-        union() {
-            rotate([-90, 0, 0])
-                linear_extrude(claw_len, center = true) claw_profile();
-            // pad is buried in the claw body and stands proud of it to
-            // form the mating face
-            translate([0, 0, claw_pad_z0])
-                linear_extrude(joint_z - joint_gap - claw_pad_z0)
-                    claw_pad_2d();
-        }
-        translate([0, 0, claw_pad_z0 - 1])
-            linear_extrude(joint_z - claw_pad_z0 + 2)
-                translate([nom_run, nom_drop]) joint_slots(joint_ang + 90);
-    }
+module claw_cut_profile() {
+    rrect(claw_bore, claw_deep, arm_r + fit);
+    // Mouth opens REARWARD. See WHY IT LOCKS: that is the one direction
+    // the hook constrains, so it is the only direction it may face.
+    box(-claw_mouth / 2, 0, claw_mouth / 2, claw_deep);
 }
 
-// Placed onto the arm, in world coordinates.
-module claw_placed() {
-    translate([-nom_run, -nom_drop, 0]) rotate([0, 0, -arm_tilt])
-        claw_part();
+module claw() {
+    at_arm() rotate([-90, 0, 0])
+        linear_extrude(claw_len, center = true) claw_profile();
+}
+
+module claw_cut(over = 2) {
+    at_arm() rotate([-90, 0, 0])
+        linear_extrude(claw_len + over, center = true) claw_cut_profile();
+}
+
+module caddy() {
+    difference() {
+        union() { hook_and_throat(); strut(); claw(); }
+        rotate([0, -90, 0]) linear_extrude(hook_len + 2, center = true)
+            rrect(arc_w + 2 * fit, arc_h + 2 * fit, arc_r + fit);
+        claw_cut();
+    }
 }
 
 // =====================================================================
 //  Attachment interface
 //
 //  Call hook_mount() and put your geometry outboard of
-//  spine_z + spine_t. The cheeks straddle the hook along the arc.
+//  spine_z + spine_t.
 // =====================================================================
 
 module tongue_profile() {
@@ -390,26 +337,25 @@ module cupholder() { hook_mount(); cup_ring(); }
 // off. Not for printing.
 module assembly(lift = 0) {
     translate([lift * sin(arm_tilt), lift * cos(arm_tilt), 0]) {
-        color("SteelBlue") hook_part();
-        color("SlateGray") claw_placed();
+        color("SteelBlue") caddy();
         color("Goldenrod") cupholder();
     }
     %arc_bar();
     %arm_bar();
 }
 
-// Each piece stands on its own bar axis for printing.
-module lay_hook() { rotate([0, -90, 0]) children(); }
-module lay_claw() { rotate([-90, 0, 0]) children(); }
+// Stand it on the arm axis: the claw becomes a true vertical prism and
+// the throat opens upward.
+module lay() { rotate([90, 0, 0]) rotate([0, 0, arm_tilt]) children(); }
 
 echo(str("claw springs ", arm_w - claw_mouth, " mm to click on"));
-echo(str("joint adjusts +/-", slot_len / 2, " mm on each axis"));
-echo(str("joint plane at z = ", joint_z, ", clear of both bars"));
+echo(str("hook allows ", 2 * fit, " mm of front-to-back play when seated"));
+echo(str("angle slack ", claw_len * sin(5) / 2,
+         " mm across the bore at 5 degrees of error"));
 
-if      (part == "hook")      lay_hook() hook_part();
-else if (part == "claw")      lay_claw() claw_part();
+if      (part == "caddy")     lay() caddy();
 else if (part == "cupholder") cupholder();
 else if (part == "testfit")   testfit();
 else if (part == "assembly")  assembly();
 else if (part == "raised")    assembly(lift = 26);
-else if (part == "all")       { hook_part(); claw_placed(); cupholder(); }
+else if (part == "all")       { caddy(); cupholder(); }

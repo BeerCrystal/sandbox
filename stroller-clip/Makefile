@@ -1,6 +1,6 @@
 SCAD  ?= openscad
 OUT   ?= build
-PARTS  = hook claw cupholder testfit
+PARTS  = caddy cupholder testfit
 
 # xvfb-run is only needed for the PNG previews; STL export is headless.
 XVFB  ?= $(shell command -v xvfb-run 2>/dev/null) $(if $(shell command -v xvfb-run 2>/dev/null),-a,)
@@ -24,13 +24,21 @@ $(OUT)/%.stl: stroller_clip.scad | $(OUT)
 # alone would not tell us anything.
 check: | $(OUT)
 	@fail=0; \
-	for c in hook_bar claw_bar pieces mount cup_bars liftoff; do \
-	  rm -f $(OUT)/chk_$$c.stl; \
-	  $(SCAD) -o $(OUT)/chk_$$c.stl -D 'part="none"' -D "check=\"$$c\"" \
-	    checks.scad >/dev/null 2>&1; \
-	  if grep -q vertex $(OUT)/chk_$$c.stl 2>/dev/null; then \
-	    echo "FAIL  $$c: interference"; fail=1; \
-	  else echo "ok    $$c"; fi; \
+	run() { rm -f $(OUT)/chk_$$1.stl; \
+	  $(SCAD) -o $(OUT)/chk_$$1.stl -D 'part="none"' -D "check=\"$$1\"" \
+	    checks.scad >/dev/null 2>&1; }; \
+	solid() { grep -q vertex $(OUT)/chk_$$1.stl 2>/dev/null; }; \
+	for c in exists_caddy exists_cup; do run $$c; \
+	  if solid $$c; then echo "ok    $$c (renders)"; \
+	  else echo "FAIL  $$c: part is EMPTY -- every clearance check below is meaningless"; fail=1; fi; \
+	done; \
+	for c in arc_bar arm_bar mount cup_bars liftoff; do run $$c; \
+	  if solid $$c; then echo "FAIL  $$c: interference"; fail=1; \
+	  else echo "ok    $$c (clear)"; fi; \
+	done; \
+	for c in trapped; do run $$c; \
+	  if solid $$c; then echo "ok    $$c (blocked, as required)"; \
+	  else echo "FAIL  $$c: the hook does not block release"; fail=1; fi; \
 	done; \
 	exit $$fail
 

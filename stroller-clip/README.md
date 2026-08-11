@@ -1,155 +1,163 @@
 # Chicco Corso corner caddy
 
-Hooks over the top arc of the handle, clips to the side arm, and carries a cup
-inboard. Two printed pieces joined by an adjustable slotted bracket, plus a
-swappable attachment interface.
+One printed piece. Snaps onto the side arm of the handle, slides down, and
+locks under the top arc. Carries a cup inboard, with a swappable attachment
+interface.
 
 Written from scratch in OpenSCAD. Nothing is derived from anyone else's model.
 
 ![front](build/front.png)
 
-## ⚠ Status: every handle dimension is a guess
-
-`arc_*`, `arm_*`, `nom_run`, `nom_drop` and `arm_tilt` are **placeholders**.
-Nothing on a real Corso has been measured. See *What to measure* below.
-
 ## How it works
 
-**On:** hold it high so the hook clears the arc → click the claw onto the side
-arm → slide down until the hook seats on the arc.
-**Off:** slide up until the hook lifts clear, then unclick.
+**On:** hold it high so the hook clears the arc → snap the claw onto the side
+arm → slide down until the hook seats.
+**Off:** slide up until the hook lifts clear, then unsnap.
 
-Three things make this work, and they're worth stating separately because each
-one removes a problem the earlier designs had:
+The **hook** is an inverted U resting on top of the arc. It carries the weight
+and sets the height — sliding down stops when it bottoms out, which is what
+keeps the caddy from slipping down the arm.
 
-**The hook carries everything.** It's an inverted U resting on top of the arc.
-It sets the height too: sliding down stops when the hook bottoms out. That is
-what keeps the side clip from slipping down.
+The **claw** is a light snap. Because the arm is tilted it slides freely *along*
+it, and that is where the travel comes from. It springs **2.9 mm** to click on
+and holds nothing but itself.
 
-**The claw needs no slot.** The side arm is tilted, so the claw slides freely
-*along* it — the arm itself provides the up-and-down travel.
+### Why it locks
 
-**Neither snap bears load,** so neither has to be tight. The claw springs
-**2.8 mm** to click on, and that is all it ever does.
+Each grip blocks the direction the other releases in:
 
-It locks because the two grips wrap bars that aren't parallel. With the hook
-down over the arc, the caddy can't translate away from the arm to release the
-claw without the hook binding on the arc.
+| | |
+|---|---|
+| Hook straddles the arc front-to-back | leaves **0.8 mm** of front-to-back play |
+| Claw's mouth points **rearward** | into exactly that constraint — it cannot open |
+| Claw wraps the arm side-to-side | stops the caddy sliding along the arc |
+| Hook rests on the bar | stops it going down |
 
-## Why two pieces
+Up is the only motion left, and that is the intended release.
 
-The hook is a prism about a bar running one way; the claw is a prism about one
-running roughly 90° from it. Both can't print support-free in one piece.
+**The mouth direction *is* the lock.** Point it outboard and the whole caddy
+pulls straight off sideways with the hook still seated. `make check` proves
+this: the `trapped` check must come out *solid*.
 
-Splitting them buys something better than printability: **the corner becomes
-adjustable.** The bend is the one thing genuinely hard to measure, and the
-slotted joint gives ±9 mm on each axis plus a few degrees of swivel — so you
-set it on the stroller instead of measuring it.
+## Measurements
 
-## What to measure
+**Done — the bar cross-sections.** One continuous 29 × 19 mm oval tube: bare on
+the side arm, wrapped in 2–3 mm of rubber on the top arc.
 
-**Two bar cross-sections**, with `print/gauge.stl` (prints flat, no supports,
-~30 min). Press the tapered slot on until it stops and read the tick.
-
-| | measure | set |
+| | front-to-back | the other axis |
 |---|---|---|
-| Top arc, where the hook goes | height and width | `arc_h`, `arc_w`, `arc_r` |
-| Side arm, where the claw goes | width and depth | `arm_w`, `arm_h`, `arm_r` |
+| Top arc (rubber) | 23 | 35 top-to-bottom |
+| Side arm (metal) | 19 | 29 across the handle plane |
 
-If a section is round, set `_r` to half the diameter and both other values equal.
+The bend happens *in* the handle plane, so the 19 mm axis stays front-to-back
+all the way round while the 29 mm axis rotates from vertical on the arc to
+side-to-side on the arm. That is why `arc_h` and `arm_w` are the same number.
 
-**Three rough numbers**, tape measure is fine — the slots absorb the error:
+**Still needed — the corner.** One piece means the geometry is baked in:
 
 - `nom_run` — horizontal distance, hook spot to claw spot
 - `nom_drop` — vertical distance between the same two spots
-- `arm_tilt` — degrees the side arm leans out from vertical (eyeball it)
+- `arm_tilt` — degrees the side arm leans out from vertical
 
-One thing to watch: the arc is wrapped in webbing in places. Put the hook on a
-**rubber section**, and measure there.
+Two things make this less fussy than it sounds. **The claw slides along the
+arm**, so error *along* the arm just parks the caddy slightly higher or lower —
+self-correcting. Only the component *perpendicular* to the arm matters. And the
+claw is deliberately short (20 mm), so a 5° angle error is only **0.87 mm**
+across the bore, which the clearance absorbs.
 
 ## Workflow
 
 ```sh
 make            # STLs into build/
-make check      # six clearance checks — all must say "ok"
+make check      # eight checks — all must say "ok"
 make preview    # PNGs
 ```
 
-1. Print the gauge, measure, set the values above.
-2. Print `testfit` (~15 min, no supports) to check the attachment interface.
-3. Print `hook` and `claw`, bolt them together loosely, fit to the stroller,
-   set the geometry, tighten.
-4. Print the cup holder.
+Print `testfit` (~15 min, no supports) to check the attachment interface before
+committing to the full part.
 
 ## Printing
 
-| Part | Orientation | Supports |
-|---|---|---|
-| `hook` | as exported — standing on the arc axis | none |
-| `claw` | as exported — standing on the arm axis | none |
-| `cupholder` | as exported | **touching buildplate**, under the tongue only |
-| `testfit` | as exported | none |
-| `gauge` | flat | none |
+Exported standing on the **arm axis**. The claw is then a true vertical prism,
+the strut and throat are vertical walls, and the throat opens upward. The only
+overhang is the hook's top plate bridging the bar channel — a routine 24 mm
+bridge, no supports needed.
 
-Each grip is exported standing on its own bar axis: no supports, hoop stress
-along the extrusion lines, hanging load in the layer plane rather than peeling
-layers apart.
+| Part | Size | Supports |
+|---|---|---|
+| `caddy` | 89 × 49 × 142 mm | none |
+| `cupholder` | 86 × 93 × 104 mm | touching buildplate, under the tongue only |
+| `testfit` | 41 × 44 × 31 mm | none |
 
 PLA is fine — the light click is what buys that. 4 perimeters, 30 % infill.
-
-**Hardware:** 2 × M3 × 16 bolts and nuts for the joint. Nothing else.
+No hardware.
 
 ## The attachment interface
 
-A **throat** on the hook piece's inboard face: a channel open at the top.
-Attachments drop in — tongue into the throat, crown over the top, spine down
-the outboard face, cheeks straddling the hook. Lift straight up to remove.
+A **throat** on the inboard face: a channel open at the top. Attachments drop in
+— tongue into the throat, crown over the top, spine down the outboard face,
+cheeks straddling the hook. Lift straight up to remove.
 
 | | value |
 |---|---|
 | throat width | 10 mm |
 | throat depth | 15 mm |
-| throat root | z = 25 mm |
-| hook length along the arc | 34 mm |
+| throat root | z = 17.9 mm |
 
 Coordinates, standing behind the stroller: **+X along the arc**, **+Y up**,
-**+Z inboard toward the seat**. The hook sits at the origin.
+**+Z inboard toward the seat**. The hook sits at the origin; the model is drawn
+seated.
 
 ```scad
 include <stroller_clip.scad>
 
 module phone_tray() {
-    hook_mount(spine_bottom = -50);        // how far the spine runs down
+    hook_mount(spine_bottom = -50);
     translate([0, -50, spine_z + spine_t - 2]) cube([60, 40, 8], center = true);
 }
 
 phone_tray();
 ```
 
-Add it to `checks.scad` and run `make check` before printing.
-
-The throat doubles as a plain hook — a bag loop drops into the channel and the
-tip stops it sliding off.
+Add it to `checks.scad` and run `make check` before printing. The throat doubles
+as a plain hook — a bag loop drops in and the tip stops it sliding off.
 
 ## Tuning
 
 | Symptom | Change |
 |---|---|
 | Claw won't click on | raise `claw_frac` |
-| Claw falls off before you slide it down | lower `claw_frac` |
-| Caddy rocks on the bars | lower `fit` |
-| Hook lifts off too easily over bumps | raise `hook_engage` |
-| Joint won't reach | raise `slot_len`, or re-measure `nom_run` / `nom_drop` |
+| Claw falls off before you slide down | lower `claw_frac` |
+| Caddy rattles | lower `arm_slop` |
+| Won't seat — binds at an angle | raise `arm_slop`, or shorten `claw_len` |
+| Hook lifts off over bumps | raise `hook_engage` |
+| Sits too high or low on the arm | nothing — it self-corrects along the arm |
 | Attachment rattles in the throat | lower `tongue_gap` |
+
+## The checks
+
+Eight, in three kinds — and the distinction is the point:
+
+- **NONEMPTY** (`exists_*`) — the parts render at all.
+- **EMPTY** (`arc_bar`, `arm_bar`, `mount`, `cup_bars`, `liftoff`) — clearances.
+- **SOLID** (`trapped`) — the hook really does block release.
+
+The existence gate is not padding. Every "must be empty" check passes trivially
+against a part that renders to nothing, and during development a silently
+dropped body made the entire suite green while the hook did not exist. An
+empty-intersection suite is worthless without proof the parts are there.
+
+`stroller_clip.scad` also carries `assert()` guards: OpenSCAD turns an undefined
+name into `undef`, and `linear_extrude(undef)` quietly builds something enormous
+rather than failing.
 
 ## Caveats
 
-- **Unmeasured.** See the status note.
+- **The corner offsets are still nominal.** See *Measurements*.
 - **The hook assumes a straight 34 mm run** of arc. It sits past the bend where
   the arc is roughly level, but the arc is still gently curved — if it rocks,
   drop `hook_len`.
-- **The cup hangs ~87 mm inboard** of the arc. Mostly ring radius; reduce
-  `cup_id` to pull it in.
+- **The cup hangs ~87 mm inboard.** Mostly ring radius; reduce `cup_id`.
 - **Not load rated.** Nothing has been physically tested.
 - **Don't hang heavy loads on a stroller handle.** Weight up there makes a
   stroller tip backwards, a hazard independent of this part's strength.
@@ -158,13 +166,7 @@ tip stops it sliding off.
 
 | File | |
 |---|---|
-| `stroller_clip.scad` | parameters, both pieces, attachment interface, cup holder |
-| `gauge.scad` | bar measuring gauge — print first |
-| `checks.scad` | six clearance checks, via `make check` |
+| `stroller_clip.scad` | parameters, the caddy, attachment interface, cup holder |
+| `gauge.scad` | bar measuring gauge |
+| `checks.scad` | the eight checks, via `make check` |
 | `print/gauge.stl` | ready to print, no OpenSCAD needed |
-
-`stroller_clip.scad` carries `assert()` guards on the joint and grip geometry.
-OpenSCAD turns an undefined name into `undef` and `linear_extrude(undef)`
-silently builds something enormous instead of failing — the asserts catch that
-class of mistake, which is exactly how a bug got as far as the clearance checks
-during development.
