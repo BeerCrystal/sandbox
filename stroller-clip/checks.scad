@@ -20,8 +20,8 @@
 include <stroller_clip.scad>
 
 check = "arc_bar";
-// [arc_bar, arm_bar, mount, cup_bars, liftoff, trapped, exists_caddy,
-//  exists_cup]
+// [arc_bar, arm_bar, mount, cup_bars, liftoff, trapped, fused_bars,
+//  fused_lift, exists_caddy, exists_cup, exists_fused]
 
 // --- the caddy against the handle ------------------------------------
 
@@ -70,7 +70,22 @@ module check_trapped() {
 
 // --- the parts exist: MUST BE NONEMPTY -------------------------------
 
+// The fused variant welds the cup on directly, so it has to clear the
+// handle on its own terms -- the drop-in geometry is not involved.
+module check_fused_bars() {
+    intersection() { fused(); union() { arc_bar(); arm_bar(); } }
+}
+
+module check_fused_lift() {
+    intersection() {
+        union() { arc_bar(); arm_bar(); }
+        for (d = [0 : lift_step : lift_mm])
+            translate([d * sin(arm_tilt), d * cos(arm_tilt), 0]) fused();
+    }
+}
+
 module check_exists_caddy() { caddy(); }
+module check_exists_fused() { fused(); }
 module check_exists_cup()   { cupholder(); }
 
 if      (check == "arc_bar")      check_arc_bar();
@@ -81,3 +96,6 @@ else if (check == "liftoff")      check_liftoff();
 else if (check == "trapped")      check_trapped();
 else if (check == "exists_caddy") check_exists_caddy();
 else if (check == "exists_cup")   check_exists_cup();
+else if (check == "exists_fused") check_exists_fused();
+else if (check == "fused_bars")   check_fused_bars();
+else if (check == "fused_lift")   check_fused_lift();

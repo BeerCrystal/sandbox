@@ -65,6 +65,48 @@ self-correcting. Only the component *perpendicular* to the arm matters. And the
 claw is deliberately short (20 mm), so a 5° angle error is only **0.87 mm**
 across the bore, which the clearance absorbs.
 
+## Using your own cup holder
+
+The caddy ships two ways:
+
+- **`caddy`** — the clip with a drop-in **throat**, so attachments swap.
+- **`fused`** — the cup welded straight on. No throat, no tongue, and the cup
+  sits ~30 mm closer to the handle, which is 30 mm off the lever arm the hook
+  has to carry. Use this if you never intend to swap.
+
+To weld in your own STL:
+
+```sh
+make CUP=vendor/PriamCupHolderV3.stl build/fused.stl
+make CUP=vendor/PriamCupHolderV3.stl check
+```
+
+Drop the file in `vendor/`. It must be a **closed mesh in millimetres** —
+`make check` will tell you if the union came out as two separate solids
+instead of one.
+
+Placement is four values in `stroller_clip.scad`:
+
+| | |
+|---|---|
+| `cup_spin` | rotation about the cup's own axis, applied **first** |
+| `cup_rot` | brings the cup upright in this frame |
+| `cup_pos` | where it lands |
+| `brk_*` | the bracket slab that welds it on |
+
+Two rotations rather than one because standing a cup upright *and* turning its
+mount to face the handle needs rotations about different axes, and a single
+`rotate()` vector applies X, then Y, then Z — the wrong order here.
+
+Aim to bury the cup's mounting boss a few millimetres into the bracket. A weld
+across real area is what you want; two solids touching at a tangent will print
+as a hinge.
+
+**Licence note:** `vendor/*.stl` is gitignored on purpose. Cup holder models
+from the sharing sites usually carry a licence — often non-commercial or
+share-alike — so somebody else's mesh should not be committed into this repo
+without checking it first.
+
 ## Workflow
 
 ```sh
@@ -86,6 +128,7 @@ bridge, no supports needed.
 | Part | Size | Supports |
 |---|---|---|
 | `caddy` | 89 × 49 × 142 mm | none |
+| `fused` (Priam cup) | 125 × 116 × 142 mm | under the cup's own overhangs |
 | `cupholder` | 86 × 93 × 104 mm | touching buildplate, under the tongue only |
 | `testfit` | 41 × 44 × 31 mm | none |
 

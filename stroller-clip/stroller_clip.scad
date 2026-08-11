@@ -58,7 +58,7 @@
 //    which bridges the bar channel — a routine 24 mm bridge.
 // =====================================================================
 
-part = "caddy";  // [caddy, cupholder, testfit, assembly, all]
+part = "caddy";  // [caddy, fused, cupholder, testfit, assembly, all]
 
 $fn = 96;
 
@@ -333,6 +333,86 @@ module cup_ring() {
 
 module cupholder() { hook_mount(); cup_ring(); }
 
+// =====================================================================
+//  Fused variant — cup welded straight onto the caddy, no drop-in
+//  interface.
+//
+//  Worth it if you never intend to swap attachments: without the throat
+//  and tongue in the way the cup moves ~30 mm closer to the handle,
+//  which is 30 mm off the lever arm the hook has to carry.
+//
+//  To use YOUR OWN cup holder instead of the ring below, set
+//  external_cup to its path:
+//
+//      openscad -o fused.stl -D 'part="fused"' \
+//               -D 'external_cup="my_cup.stl"' \
+//               -D 'cup_rot=[90,0,0]' -D 'cup_pos=[0,-30,40]' \
+//               stroller_clip.scad
+//
+//  The STL must be a closed mesh in millimetres. cup_rot is applied
+//  first, then cup_pos, both in the world frame above: +X along the
+//  arc, +Y up, +Z inboard. Aim to bury it a few mm into the bracket so
+//  the union is a real weld rather than two solids touching.
+// =====================================================================
+
+// Your own cup holder, instead of the ring below. Rotation is applied
+// as: spin about the cup's own axis first, then cup_rot, then cup_pos.
+// Two stages because getting a cup upright AND facing the handle needs
+// rotations about two different axes, and a single rotate() vector
+// applies X, then Y, then Z — the wrong order for this.
+//
+// The STL must be a closed mesh in millimetres. Bury it a few mm into
+// the bracket so the union is a real weld, not two solids touching.
+
+external_cup = "";          // e.g. "vendor/PriamCupHolderV3.stl"
+cup_spin     = 180;         // about the cup's own axis, applied first
+cup_rot      = [-90, 0, 0]; // stands a Z-up cup upright in this frame
+cup_pos      = [0, -36, 12.9];
+
+// --- built-in ring, used when external_cup is empty ------------------
+
+fused_top    = -20;
+fused_cz     = mnt_z0 + cup_or - 4;
+fused_inner  = fused_cz - cup_id / 2;
+
+module fused_ring() {
+    translate([0, fused_top - ring_h, fused_cz]) rotate([-90, 0, 0])
+        difference() {
+            cylinder(h = ring_h, r = cup_or);
+            translate([0, 0, base_t]) cylinder(h = ring_h, r = cup_id / 2);
+            translate([0, 0, -1]) cylinder(h = base_t + 2, r = drain_r);
+        }
+}
+
+// --- the weld --------------------------------------------------------
+// A slab tying the caddy's inboard face into the cup's mounting boss,
+// so the two meet across a real area rather than at a tangent. Sized to
+// suit either cup.
+
+brk_x  = 15;    // half width, along the arc
+brk_y0 = -64;   // bottom
+brk_y1 = -8;    // top
+brk_z1 = 22;    // how far inboard it reaches
+
+module fused_bracket() {
+    translate([-brk_x, brk_y0, strut_z0])
+        cube([2 * brk_x, brk_y1 - brk_y0, brk_z1 - strut_z0]);
+}
+
+module fused_cup() {
+    if (external_cup == "") fused_ring();
+    else translate(cup_pos) rotate(cup_rot) rotate([0, 0, cup_spin])
+             import(external_cup);
+}
+
+module fused() {
+    union() {
+        caddy();
+        fused_bracket();
+        fused_cup();
+    }
+}
+
 // Fit check only. `lift` slides the caddy up the arm, the way it comes
 // off. Not for printing.
 module assembly(lift = 0) {
@@ -354,6 +434,7 @@ echo(str("angle slack ", claw_len * sin(5) / 2,
          " mm across the bore at 5 degrees of error"));
 
 if      (part == "caddy")     lay() caddy();
+else if (part == "fused")     lay() fused();
 else if (part == "cupholder") cupholder();
 else if (part == "testfit")   testfit();
 else if (part == "assembly")  assembly();

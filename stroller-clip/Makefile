@@ -1,6 +1,12 @@
 SCAD  ?= openscad
 OUT   ?= build
-PARTS  = caddy cupholder testfit
+
+# Your own cup holder STL, welded on by the `fused` part:
+#     make CUP=vendor/PriamCupHolderV3.stl
+# Leave unset to use the built-in ring.
+CUP   ?=
+CUPD   = $(if $(CUP),-D 'external_cup="$(abspath $(CUP))"',)
+PARTS  = caddy fused cupholder testfit
 
 # xvfb-run is only needed for the PNG previews; STL export is headless.
 XVFB  ?= $(shell command -v xvfb-run 2>/dev/null) $(if $(shell command -v xvfb-run 2>/dev/null),-a,)
@@ -16,7 +22,7 @@ $(OUT)/gauge.stl: gauge.scad | $(OUT)
 	$(SCAD) --export-format=binstl -o $@ $<
 
 $(OUT)/%.stl: stroller_clip.scad | $(OUT)
-	$(SCAD) --export-format=binstl -o $@ -D 'part="$*"' $<
+	$(SCAD) --export-format=binstl -o $@ -D 'part="$*"' $(CUPD) $<
 
 # Clearance checks. Each must produce an empty result; anything solid
 # means the attachment fouls the clip. Exported as ASCII on purpose --
@@ -26,13 +32,13 @@ check: | $(OUT)
 	@fail=0; \
 	run() { rm -f $(OUT)/chk_$$1.stl; \
 	  $(SCAD) -o $(OUT)/chk_$$1.stl -D 'part="none"' -D "check=\"$$1\"" \
-	    checks.scad >/dev/null 2>&1; }; \
+	    $(CUPD) checks.scad >/dev/null 2>&1; }; \
 	solid() { grep -q vertex $(OUT)/chk_$$1.stl 2>/dev/null; }; \
-	for c in exists_caddy exists_cup; do run $$c; \
+	for c in exists_caddy exists_cup exists_fused; do run $$c; \
 	  if solid $$c; then echo "ok    $$c (renders)"; \
 	  else echo "FAIL  $$c: part is EMPTY -- every clearance check below is meaningless"; fail=1; fi; \
 	done; \
-	for c in arc_bar arm_bar mount cup_bars liftoff; do run $$c; \
+	for c in arc_bar arm_bar mount cup_bars liftoff fused_bars fused_lift; do run $$c; \
 	  if solid $$c; then echo "FAIL  $$c: interference"; fail=1; \
 	  else echo "ok    $$c (clear)"; fi; \
 	done; \

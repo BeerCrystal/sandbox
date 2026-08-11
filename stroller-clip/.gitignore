@@ -3,3 +3,8 @@ build/*
 !build/assembly.png
 !build/front.png
 !build/raised.png
+
+# Third-party cup holder STLs live here but are not committed — they are
+# someone else's model, with someone else's licence. Drop yours in and
+# build with `make CUP=vendor/<file>.stl`.
+vendor/*.stl
