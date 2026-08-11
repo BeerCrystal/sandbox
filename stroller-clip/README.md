@@ -53,17 +53,42 @@ The bend happens *in* the handle plane, so the 19 mm axis stays front-to-back
 all the way round while the 29 mm axis rotates from vertical on the arc to
 side-to-side on the arm. That is why `arc_h` and `arm_w` are the same number.
 
-**Still needed — the corner.** One piece means the geometry is baked in:
+**Still needed — the corner.** One piece means the geometry is baked in. But
+this is **two readings, not three numbers**: the claw slides along the arm, so
+where it sits along the arm is a design choice, not a measurement. What is
+actually needed is the arm's *axis line* relative to the hook spot — and two
+crossings define a line.
 
-- `nom_run` — horizontal distance, hook spot to claw spot
-- `nom_drop` — vertical distance between the same two spots
-- `arm_tilt` — degrees the side arm leans out from vertical
+### Using the corner gauge
 
-Two things make this less fussy than it sounds. **The claw slides along the
-arm**, so error *along* the arm just parks the caddy slightly higher or lower —
-self-correcting. Only the component *perpendicular* to the arm matters. And the
-claw is deliberately short (20 mm), so a 5° angle error is only **0.87 mm**
-across the bore, which the clearance absorbs.
+Print `build/corner_gauge.stl` (flat, no supports, ~45 min, 198 × 170 mm).
+
+1. Slide the top slot onto the arc and push it along toward the corner until
+   the closed end of the slot **stops against the bend**. The bend is the
+   reference — that makes the origin repeatable instead of "wherever I held
+   it". The hook will sit at that spot.
+2. Press it flat against the front faces of **both** bars. That is what holds
+   it parallel to the plane of the handle. The two bars differ in depth by
+   2 mm, tilting the gauge about 1° over its length — ignorable.
+3. Look through each window and read the tick at the **left and right edges**
+   of the side arm. Four numbers.
+
+```sh
+python3 solve_corner.py <L1> <R1> <L2> <R2>
+```
+
+Read both edges rather than eyeballing the middle. Averaging two edges beats
+judging a midpoint, and the width falling out at ~29 mm is an independent check
+that you read the right scale — the solver warns if it doesn't.
+
+Two windows rather than one because **angle is the thing you cannot judge by
+eye**, and the 70 mm baseline between them measures it well. It is also
+forgiving in a useful way: a reading error applied to both windows shifts the
+offset but leaves the angle untouched.
+
+And the tolerances are loose anyway. Error *along* the arm is self-correcting,
+and the claw is deliberately short (20 mm), so a 5° angle error is only
+**0.87 mm** across the bore — absorbed by clearance.
 
 ## Using your own cup holder
 

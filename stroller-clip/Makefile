@@ -13,12 +13,15 @@ XVFB  ?= $(shell command -v xvfb-run 2>/dev/null) $(if $(shell command -v xvfb-r
 
 .PHONY: all check preview clean
 
-all: $(PARTS:%=$(OUT)/%.stl) $(OUT)/gauge.stl
+all: $(PARTS:%=$(OUT)/%.stl) $(OUT)/gauge.stl $(OUT)/corner_gauge.stl
 
 $(OUT):
 	mkdir -p $(OUT)
 
 $(OUT)/gauge.stl: gauge.scad | $(OUT)
+	$(SCAD) --export-format=binstl -o $@ $<
+
+$(OUT)/corner_gauge.stl: corner_gauge.scad | $(OUT)
 	$(SCAD) --export-format=binstl -o $@ $<
 
 $(OUT)/%.stl: stroller_clip.scad | $(OUT)
