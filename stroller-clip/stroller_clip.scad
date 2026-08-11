@@ -1,137 +1,162 @@
 // =====================================================================
-//  Chicco Corso — handle clip with top hook, and hook-mounted
-//  attachments.
+//  Chicco Corso — corner handle clip, click-and-drop interlock.
 //
 //  Coordinate convention, as fitted to the stroller:
-//      +X   outboard — the direction the hook points, away from the
-//           person pushing
+//      +X   outboard — the side the body and attachments sit on
 //      +Y   up
-//      +Z   along the handle axis
+//      +Z   along the handle bar, z = 0 at the middle of the clip
+//
+//  The handle bar sits at the origin. The model is drawn in the
+//  SEATED (locked) position.
 //
 //  ---------------------------------------------------------------
 //  !! THE HANDLE DIMENSIONS BELOW ARE UNMEASURED PLACEHOLDERS.     !!
 //  !! Print gauge.scad, measure the handle in both directions, and !!
-//  !! set handle_w / handle_h / handle_r before printing the clip. !!
+//  !! set handle_w / handle_h / handle_r before printing anything. !!
 //  ---------------------------------------------------------------
 //
-//  Why the clip is a flat profile extruded along Z: printed standing
-//  on end (handle axis vertical) every feature comes out without
-//  support, the band's hoop stress runs along the extrusion lines
-//  rather than across layers, and the in-use load on the hook lies in
-//  the layer plane instead of trying to peel layers apart.
+//  HOW IT GOES ON
+//    1. Hold the clip high, so the cap clears the top of the bar.
+//    2. Push it on sideways. The jaw clicks over the bar.
+//    3. Slide it down. The cap drops over the top of the bar and the
+//       bar rises to the top of the jaw slot.
+//    Off is the reverse: lift first, then unclick. Under load it
+//    cannot do that by itself.
+//
+//  WHY IT LOCKS
+//    The jaw bore is a vertical SLOT, taller than the bar by
+//    slide_travel. The mouth is cut at the bar's insertion height
+//    only. Once seated, the bar has risen past the mouth and sits
+//    against solid wall, so the jaw cannot release at all until the
+//    clip is lifted. The cap over the top is what carries the hanging
+//    load, which means the click itself only has to hold the part
+//    steady during the slide -- so it can be light. That is the whole
+//    point: a snap that has to resist load must be tight, and a tight
+//    snap cracks.
+//
+//  PRINTING
+//    Print standing on end, bar axis vertical, exactly as exported.
+//    Every face is then a vertical wall: no supports, hoop stress in
+//    the jaw runs along the extrusion lines, and the hanging load sits
+//    in the layer plane instead of peeling layers apart. The jaw and
+//    cap are deliberately adjacent along Z with no gap, so the cap's
+//    far leg is printed on top of the jaw's far wall rather than
+//    starting in mid-air.
 // =====================================================================
 
-part = "clip";   // [clip, cupholder, testfit, all]
+part = "clip";   // [clip, cupholder, testfit, assembly, all]
 
 $fn = 96;
 
 // --- handle ----------------------------------------------------------
-// Modelled as a rounded rectangle. A round handle is just the case
-// where handle_w == handle_h == 2 * handle_r.
+// Modelled as a rounded rectangle. A round bar is the case where
+// handle_w == handle_h == 2 * handle_r.
 
-handle_w    = 30;    // front-to-back, mm   *** PLACEHOLDER ***
-handle_h    = 26;    // top-to-bottom, mm   *** PLACEHOLDER ***
-handle_r    = 11;    // corner radius, mm   *** PLACEHOLDER ***
+handle_w   = 30;    // front-to-back, mm   *** PLACEHOLDER ***
+handle_h   = 26;    // top-to-bottom, mm   *** PLACEHOLDER ***
+handle_r   = 11;    // corner radius, mm   *** PLACEHOLDER ***
 
-// The grip is textured rubber, so the bore is deliberately undersized:
-// the clip squeezes into the rubber instead of sliding on it. Raise for
-// more grip, lower if it will not go on. 0 = neutral fit.
-rubber_bite = 0.5;
+fit        = 0.4;   // clearance between clip and bar
 
-// --- clamp band ------------------------------------------------------
+// --- the interlock ---------------------------------------------------
 
-band_wall   = 4;     // wall thickness around the handle
-clamp_len   = 30;    // length along the handle (= extrusion depth)
-// Opening width as a fraction of handle_h. Below 1.0 the band wraps
-// past halfway and self-retains. This is the main thing to tune, and
-// it is a real trade-off: the band has to spring open by
-// (handle_h - mouth_w) to get over the handle at all. At 0.86 that is
-// ~3.6 mm total, which PETG will take and PLA may crack at. Go lower
-// only if you are running without the pinch bolt.
-mouth_frac  = 0.86;
-fillet_r    = 2;     // fillet where the tower meets the band
+slide_travel = 10;  // vertical throw between clicked-on and locked.
+                    // Must exceed cap_engage or the cap will not clear
+                    // the bar when you lift to remove it.
+cap_engage   = 8;   // how far the cap's far leg reaches down past the
+                    // top of the bar once seated
 
-// --- tower and hook --------------------------------------------------
+// Mouth width as a fraction of handle_h. This is the click. Unlike a
+// load-bearing snap it only has to hold the clip steady while you slide
+// it down, so it can stay light: 0.94 springs the jaw ~1.5 mm, which
+// even PLA will take.
+mouth_frac  = 0.94;
 
-tower_t     = 5;     // thickness of the pillar outboard of the band
-tower_bottom = -14;  // how far the pillar runs below the handle centre
-hook_y      = 8;     // underside of the hook arm
-hook_t      = 5;     // hook stock thickness
-hook_reach  = 16;    // how far the arm reaches outboard
-hook_rise   = 16;    // height of the upturned tip = throat depth
+// --- structure -------------------------------------------------------
 
-// --- pinch bolt ------------------------------------------------------
-// Optional. Rubber takes a compression set over time, so a snap fit
-// that feels tight today can be loose in a month; the bolt lets you
-// take that up. Set false for a hardware-free snap-on clip.
-
-use_bolt      = true;
-ear_len       = 8;    // how far the ears project past the band
-ear_t         = 6;    // ear thickness
-ear_overlap   = 6;    // how far the ears reach back into the band
-bolt_clear_r  = 1.75; // M3 clearance, near ear
-bolt_pilot_r  = 1.35; // M3 self-tapping pilot, far ear
+wall        = 4;    // wall thickness around the bar
+jaw_len     = 22;   // length of the jaw station along the bar
+cap_len     = 24;   // length of the cap station along the bar
+backbone_t  = 6;    // thickness of the plate carrying the attachments
+fillet_r    = 2;
 
 // --- attachment interface -------------------------------------------
-// Attachments drop straight down over the hook: a tongue into the
-// throat, a crown over the top, a spine down the outboard face, and
-// two cheeks straddling the clip so nothing slides along the handle.
+// A throat on the outboard face: a channel open at the top. Attachments
+// drop in and lift out, and a bag loop hangs in it directly.
 
-fit_gap     = 0.35;  // clearance per side between tongue and throat
-crown_t     = 6;     // thickness of the plate that bridges the top
-spine_t     = 6;     // thickness of the outboard spine
-spine_gap   = 0.6;   // clearance between spine and the hook tip
-cheek_t     = 3;     // cheek thickness
-cheek_gap   = 0.4;   // clearance per side between cheeks and the clip
-head_up     = 8;     // how far the tongue rises above the hook tip
+mnt_y       = 0;    // underside of the throat arm
+mnt_t       = 5;    // throat stock thickness
+mnt_reach   = 15;   // how far the arm reaches outboard
+mnt_rise    = 15;   // throat depth
+
+tongue_gap  = 0.35; // clearance per side, tongue to throat
+tongue_len  = 32;   // length of the tongue along the bar
+crown_t     = 6;
+spine_t     = 6;
+spine_gap   = 0.6;
+cheek_t     = 3;
+cheek_gap   = 0.4;
+head_up     = 8;
 
 // --- sample cup holder ----------------------------------------------
 
-cup_id      = 80;    // inside diameter of the ring
+cup_id      = 80;
 ring_wall   = 3;
 ring_h      = 45;
-ring_top    = 8;     // height of the ring's rim, in stroller coords
-base_t       = 3;
-drain_r      = 9;
+ring_top    = -6;   // height of the ring's rim, in stroller coords
+base_t      = 3;
+drain_r     = 9;
 
 // =====================================================================
 //  Derived geometry
 // =====================================================================
 
-bore_w = handle_w - 2 * rubber_bite;
-bore_h = handle_h - 2 * rubber_bite;
-bore_r = max(0.5, handle_r - rubber_bite);
+bore_w   = handle_w + 2 * fit;
+bore_h   = handle_h + 2 * fit;
+bar_top  = handle_h / 2 + fit;              // where the clip rests on the bar
 
-band_w = bore_w + 2 * band_wall;
-band_h = bore_h + 2 * band_wall;
-band_r = bore_r + band_wall;
+slot_h   = bore_h + slide_travel;           // the jaw's vertical slot
+slot_cy  = bar_top - slot_h / 2;            // seated: bar at the top of it
+insert_y = -slide_travel;                   // bar height, in clip coords,
+                                            // at the moment you click it on
+mouth_h  = handle_h * mouth_frac;
 
-mouth_w = handle_h * mouth_frac;
+bx0      = bore_w / 2 + wall;               // inboard face of the backbone
+bx1      = bx0 + backbone_t;                // outboard face = throat root
+far_x    = -(bore_w / 2 + wall);            // outer face of the far wall
 
-face_x     = band_w / 2 + tower_t;                 // outboard face of the pillar
-tip_inner  = face_x + hook_reach - hook_t;         // inboard face of the upturned tip
-tip_outer  = face_x + hook_reach;
-throat_w   = hook_reach - hook_t;                  // gap you hang things in
-throat_y   = hook_y + hook_t;                      // floor of the throat
-hook_top   = throat_y + hook_rise;
+cap_top  = bar_top + wall;
+cap_bot  = bar_top - cap_engage;
 
-tower_x0   = band_w / 2 - 4;                       // pillar overlaps the band
+// Adjacent along Z, no gap, so the cap's far leg prints onto the jaw.
+body_len = jaw_len + cap_len;
+jaw_z0   = -body_len / 2;
+cap_z0   = jaw_z0 + jaw_len;
 
-// Attachment side
-tongue_x0  = face_x + fit_gap;
-tongue_t   = throat_w - 2 * fit_gap;
-tongue_y0  = throat_y + fit_gap;
-tongue_top = hook_top + head_up;
+// Attachment interface
+tip_inner  = bx1 + mnt_reach - mnt_t;
+tip_outer  = bx1 + mnt_reach;
+throat_w   = mnt_reach - mnt_t;
+throat_y   = mnt_y + mnt_t;
+throat_top = throat_y + mnt_rise;
+
+tongue_x0  = bx1 + tongue_gap;
+tongue_t   = throat_w - 2 * tongue_gap;
+tongue_y0  = throat_y + tongue_gap;
+tongue_top = throat_top + head_up;
 spine_x    = tip_outer + spine_gap;
-mount_w_outer = clamp_len + 2 * (cheek_gap + cheek_t);
+
+body_bot   = slot_cy - slot_h / 2 - wall;
+body_top   = max(cap_top, tongue_top);
+
+cheek_z    = body_len / 2 + cheek_gap + cheek_t / 2;
 cup_or     = cup_id / 2 + ring_wall;
-ring_cx    = spine_x + spine_t + cup_or - 3;       // 3 mm merge into the spine
+ring_cx    = spine_x + spine_t + cup_or - 3;
 
 // =====================================================================
 //  Helpers
 // =====================================================================
 
-// Rounded rectangle centred on the origin.
 module rrect(w, h, r) {
     rr = min(r, w / 2, h / 2);
     hull()
@@ -140,87 +165,94 @@ module rrect(w, h, r) {
                 circle(r = rr);
 }
 
-// Rectangle given opposite corners, so the profile code below can be
-// read straight off the coordinate convention.
-// Corners may be given in either order -- the mirrored ear pair below
-// relies on that.
+// Corners may be given in either order.
 module box(x0, y0, x1, y1) {
     translate([min(x0, x1), min(y0, y1)])
         square([abs(x1 - x0), abs(y1 - y0)]);
+}
+
+// The bar itself, for fit checks and previews. Not a printed part.
+module handle_bar(len = 200) {
+    linear_extrude(height = len, center = true)
+        rrect(handle_w, handle_h, handle_r);
 }
 
 // =====================================================================
 //  The clip
 // =====================================================================
 
-module band_2d()  { rrect(band_w, band_h, band_r); }
-module bore_2d()  { rrect(bore_w, bore_h, bore_r); }
-
-module tower_2d() { box(tower_x0, tower_bottom, face_x, hook_top); }
-
-module hook_2d() {
-    box(face_x - 1, hook_y,    tip_outer, throat_y);   // arm
-    box(tip_inner,  throat_y,  tip_outer, hook_top);   // upturned tip
+// The vertical slot the bar rides in. Taller than the bar by
+// slide_travel; the bar sits at the top of it once seated.
+module slot_2d() {
+    translate([0, slot_cy]) rrect(bore_w, slot_h, handle_r + fit);
 }
 
-// Opening faces inboard (-X), towards the person pushing, so the clip
-// is pushed on from behind and the hanging load never pulls in line
-// with the gap.
-module mouth_2d() { box(-band_w, -mouth_w / 2, 0, mouth_w / 2); }
-
-module ears_2d() {
-    for (s = [-1, 1])
-        box(-(band_w / 2 + ear_len), s * mouth_w / 2,
-            -(band_w / 2 - ear_overlap), s * (mouth_w / 2 + ear_t));
+// Cut only at the height the bar occupies while you are clicking it on.
+// Once the clip is slid down, the bar is above this and held by solid
+// wall -- which is what makes the interlock an interlock.
+module mouth_2d() {
+    box(far_x - 5, insert_y - mouth_h / 2, 0, insert_y + mouth_h / 2);
 }
 
-module clip_profile() {
+module jaw_2d() {
     difference() {
-        // Fillet the concave corners where the added shapes meet, then
-        // cut the holes, so the bore keeps its exact size.
         offset(r = -fillet_r) offset(r = fillet_r) {
-            band_2d();
-            tower_2d();
-            hook_2d();
-            if (use_bolt) ears_2d();
+            translate([0, slot_cy])
+                rrect(bore_w + 2 * wall, slot_h + 2 * wall,
+                      handle_r + fit + wall);
+            backbone_2d();
         }
-        bore_2d();
+        slot_2d();
         mouth_2d();
     }
 }
 
-module bolt_holes() {
-    bx = -(band_w / 2 + ear_len / 2);
-    bz = 0;
-    span = mouth_w + 2 * ear_t + 2;
-
-    // Pilot straight through both ears...
-    translate([bx, -(mouth_w / 2 + ear_t + 1), bz])
-        rotate([-90, 0, 0]) cylinder(h = span, r = bolt_pilot_r);
-    // ...opened out to clearance in the near ear only, so the bolt
-    // pulls the two ears together instead of just spinning.
-    translate([bx, mouth_w / 2 - 0.1, bz])
-        rotate([-90, 0, 0]) cylinder(h = ear_t + 0.2, r = bolt_clear_r);
+// Inverted U straddling the top of the bar. Its far leg reaches down
+// past the bar's shoulder by cap_engage, so lifting by slide_travel is
+// the only way to get it off.
+module cap_2d() {
+    difference() {
+        offset(r = -fillet_r) offset(r = fillet_r) {
+            box(far_x, cap_bot, bx1, cap_top);
+            backbone_2d();
+        }
+        slot_2d();
+    }
 }
 
-// Centred on z = 0, the same datum the attachments use, so the two
-// halves line up along the handle.
+module backbone_2d() { box(bx0, body_bot, bx1, body_top); }
+
+// The attachment throat, running the full length of the backbone.
+module throat_2d() {
+    box(bx1 - 1, mnt_y,   tip_outer, throat_y);    // arm
+    box(tip_inner, throat_y, tip_outer, throat_top); // upturned tip
+}
+
 module clip() {
     difference() {
-        linear_extrude(height = clamp_len, center = true) clip_profile();
-        if (use_bolt) bolt_holes();
+        union() {
+            translate([0, 0, jaw_z0]) linear_extrude(jaw_len) jaw_2d();
+            translate([0, 0, cap_z0]) linear_extrude(cap_len) cap_2d();
+            linear_extrude(height = body_len, center = true)
+                offset(r = -fillet_r) offset(r = fillet_r) {
+                    backbone_2d();
+                    throat_2d();
+                }
+        }
+        // The bar passes through the whole length, so the slot has to
+        // be cleared along the backbone too, not just at the stations.
+        linear_extrude(height = body_len + 2, center = true) slot_2d();
     }
 }
 
 // =====================================================================
 //  Attachment interface
 //
-//  Include this in any attachment you design. Everything outboard of
-//  spine_x + spine_t is yours.
+//  Call hook_mount() and put your geometry outboard of
+//  spine_x + spine_t. The cheeks straddle the whole clip, so nothing
+//  slides along the bar.
 // =====================================================================
 
-// Tongue, with its lower corners clipped so it clears the fillets in
-// the bottom of the throat.
 module tongue_2d() {
     difference() {
         box(tongue_x0, tongue_y0, tongue_x0 + tongue_t, tongue_top);
@@ -231,24 +263,19 @@ module tongue_2d() {
     }
 }
 
-// Crown over the top of the hook, and the spine down its outboard
-// face. Extruded to the full outer width so the cheeks land on it.
 module yoke_2d(spine_bottom) {
     box(tongue_x0, tongue_top - crown_t, spine_x + spine_t, tongue_top);
     box(spine_x, spine_bottom, spine_x + spine_t, tongue_top);
 }
 
-// Reaches back inboard alongside the clip, locating the attachment
-// along the handle.
-module cheek_2d() { box(face_x - 10, hook_y, spine_x, tongue_top); }
+module cheek_2d() { box(bx1 - 2, mnt_y, spine_x, tongue_top); }
 
-// spine_bottom: how far down the outboard face the spine runs, in
-// stroller coordinates. Your attachment hangs off it below the hook.
 module hook_mount(spine_bottom = ring_top - ring_h) {
-    linear_extrude(height = clamp_len - 1, center = true) tongue_2d();
-    linear_extrude(height = mount_w_outer, center = true) yoke_2d(spine_bottom);
+    linear_extrude(height = tongue_len, center = true) tongue_2d();
+    linear_extrude(height = 2 * cheek_z + cheek_t, center = true)
+        yoke_2d(spine_bottom);
     for (s = [-1, 1])
-        translate([0, 0, s * (clamp_len / 2 + cheek_gap + cheek_t / 2)])
+        translate([0, 0, s * cheek_z])
             linear_extrude(height = cheek_t, center = true) cheek_2d();
 }
 
@@ -256,14 +283,12 @@ module hook_mount(spine_bottom = ring_top - ring_h) {
 //  Parts
 // =====================================================================
 
-// Minimal print to prove the interface fits before committing to a
-// full-size attachment. ~15 min.
 module testfit() {
-    hook_mount(spine_bottom = ring_top - 14);
+    hook_mount(spine_bottom = mnt_y - 14);
     difference() {
-        translate([spine_x + spine_t - 2, ring_top - 4, 0])
+        translate([spine_x + spine_t - 2, mnt_y - 4, 0])
             rotate([0, 90, 0]) cylinder(h = 12, r = 9);
-        translate([spine_x + spine_t - 3, ring_top - 4, 0])
+        translate([spine_x + spine_t - 3, mnt_y - 4, 0])
             rotate([0, 90, 0]) cylinder(h = 14, r = 4.5);
     }
 }
@@ -282,32 +307,37 @@ module cupholder() {
     cup_ring();
 }
 
-// Attachments are not extrusions, so each one gets the orientation
+// Fit check only. Not for printing.
+//   lift = 0            -> seated and locked
+//   lift = slide_travel -> raised, jaw mouth lined up with the bar
+module assembly(lift = 0) {
+    upright() {
+        translate([0, lift, 0]) {
+            color("SteelBlue") clip();
+            color("Goldenrod") cupholder();
+        }
+        %handle_bar();
+    }
+}
+
+// Attachments are not simple extrusions, so each gets the orientation
 // that suits it.
-//
-// upright:   in-use +Y -> +Z. The cup ring prints axis-vertical, so it
-//            comes out round and its base is on the plate. Costs a
-//            little support under the tongue, which hangs in mid-air.
-// inverted:  in-use +Y -> -Z. Everything grows upward off the crown,
-//            so it needs no support at all -- but only works for
-//            attachments with no downward-facing cavity.
+//   upright  — in-use +Y up the plate. The cup ring prints axis-vertical
+//              and round; costs a little support under the tongue.
+//   inverted — grows upward off the crown, no support at all, but only
+//              works where there is no downward-facing cavity.
 module upright()  { rotate([ 90, 0, 0]) children(); }
 module inverted() { rotate([-90, 0, 0]) children(); }
 
-// Fit check only -- both parts in their as-fitted positions, so you
-// can see the tongue sitting in the throat. Not for printing.
-module assembly() {
-    upright() {
-        color("SteelBlue")  clip();
-        color("Goldenrod")  cupholder();
-        // stand-in for the handle
-        %linear_extrude(height = clamp_len * 3.4, center = true)
-            rrect(handle_w, handle_h, handle_r);
-    }
-}
+echo(str("jaw springs ", handle_h - mouth_h, " mm to click on"));
+echo(str("lift ", slide_travel, " mm to release; cap engages ",
+         cap_engage, " mm"));
+echo(str("clip is ", body_len, " mm along the bar -- it needs that much "
+         , "straight run"));
 
 if      (part == "clip")      clip();
 else if (part == "cupholder") upright()  cupholder();
 else if (part == "testfit")   inverted() testfit();
 else if (part == "assembly")  assembly();
+else if (part == "raised")    assembly(lift = slide_travel);
 else if (part == "all")       { clip(); cupholder(); }

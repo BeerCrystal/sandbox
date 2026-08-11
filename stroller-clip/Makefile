@@ -24,7 +24,7 @@ $(OUT)/%.stl: stroller_clip.scad | $(OUT)
 # alone would not tell us anything.
 check: | $(OUT)
 	@fail=0; \
-	for c in mount cheeks; do \
+	for c in seated raised release mount lift; do \
 	  rm -f $(OUT)/chk_$$c.stl; \
 	  $(SCAD) -o $(OUT)/chk_$$c.stl -D 'part="none"' -D "check=\"$$c\"" \
 	    checks.scad >/dev/null 2>&1; \
@@ -34,12 +34,18 @@ check: | $(OUT)
 	done; \
 	exit $$fail
 
+PROF = --imgsize=820,700 --projection=o --camera=8,-4,0,0,0,0,165 -D 'part="none"'
+
 preview: | $(OUT)
 	$(XVFB) $(SCAD) -o $(OUT)/assembly.png --imgsize=1100,850 \
 	  --viewall --autocenter --camera=0,0,0,62,0,28,0 \
 	  -D 'part="assembly"' stroller_clip.scad
-	$(XVFB) $(SCAD) -o $(OUT)/profile.png --imgsize=1000,760 --projection=o \
-	  --camera=6.5,6,15,0,0,0,190 -D 'part="clip"' stroller_clip.scad
+	$(XVFB) $(SCAD) -o $(OUT)/jaw-seated.png $(PROF) \
+	  -D 'station="jaw"' -D 'lift=0' profiles.scad
+	$(XVFB) $(SCAD) -o $(OUT)/jaw-raised.png $(PROF) \
+	  -D 'station="jaw"' -D 'lift=10' profiles.scad
+	$(XVFB) $(SCAD) -o $(OUT)/cap.png $(PROF) \
+	  -D 'station="cap"' -D 'lift=0' profiles.scad
 
 clean:
 	rm -rf $(OUT)

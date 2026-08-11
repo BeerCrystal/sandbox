@@ -1,8 +1,8 @@
 # Chicco Corso handle clip
 
-A parametric handle clip for a Chicco Corso stroller: a clamp that grips the
-handle from the side, a hook on top, and a documented interface so attachments
-— cup holder, phone mount, bag hook — all share the same mount.
+A parametric handle clip for a Chicco Corso stroller. It clicks onto the side
+of the handle bar, then slides down so a cap drops over the top and locks it on.
+Attachments — cup holder, phone mount, bag hook — share one interface.
 
 Written from scratch in OpenSCAD. Nothing here is derived from anyone else's
 model, so there is no upstream licence to carry.
@@ -15,77 +15,91 @@ model, so there is no upstream licence to carry.
 **placeholders**. No Corso handle has been measured. Print the gauge, measure
 your handle, set those three numbers, and only then print the clip.
 
+## How it works
+
+**On:** hold it high so the cap clears the bar → push on sideways, the jaw
+clicks over → slide down, the cap drops over the top.
+**Off:** lift, then unclick. Under load it cannot do that by itself.
+
+The jaw bore is a **vertical slot**, 10 mm taller than the bar, and the mouth is
+cut only at the height the bar sits at while you are clicking it on. Once you
+slide down, the bar has risen past the mouth and is against solid wall:
+
+| | | |
+|---|---|---|
+| ![seated](build/jaw-seated.png) | ![raised](build/jaw-raised.png) | ![cap](build/cap.png) |
+| **Seated.** Bar at the top of the slot, blocked by 10.8 mm of solid wall. The mouth is empty, below it. | **Raised 10 mm.** Bar has dropped to the bottom of the slot and lines up with the mouth. Only now can it click off. | **The cap**, an inverted U reaching 8 mm down past the bar's shoulder. |
+
+The point of splitting it this way is that **the click never carries the load** —
+the cap does. A snap that has to resist load must be tight, and a tight snap
+cracks. This one only has to hold the part steady during the slide, so it is
+light: **the jaw springs 1.56 mm to click on**, which even PLA will take.
+
 ## Workflow
 
 ```sh
 make            # all STLs into build/
-make check      # clearance checks — both must say "ok"
-make preview    # PNG previews
+make check      # five clearance checks — all must say "ok"
+make preview    # PNGs
 ```
 
-**1 — Measure.** Print `build/gauge.stl` (or the ready-made copy in
-`print/gauge.stl`, no OpenSCAD needed). Flat on the bed, no supports, ~30 min.
+**1 — Measure.** Print `build/gauge.stl` (or `print/gauge.stl`, ready to go, no
+OpenSCAD needed). Flat, no supports, ~30 min.
 
 Press the tapered slot onto the handle until it stops and read the tick level
-with the handle. Measure twice:
+with the handle. Twice:
 
 - plate held **vertically** → handle **height** (top to bottom) → `handle_h`
 - plate held **horizontally** → handle **width** (front to back) → `handle_w`
 
 For `handle_r`: if the grip is round, set all three to `w/2`. If it is a
-flattened oval, start at `handle_r = min(w,h)/2` and reduce if the clip rocks.
+flattened oval, start at `min(w,h)/2` and reduce if the clip rocks.
 
-**2 — Test the interface.** Set your three numbers, then print
-`build/testfit.stl` (~15 min, no supports). It is just the mount and a small
-loop. Check it drops onto the hook and does not rattle. Adjust `fit_gap`.
+**Also check there is 46 mm of straight bar** where you want to mount it. See
+the caveat below — this is the one that might bite.
 
-**3 — Print the clip**, then whatever attachment you want.
+**2 — Test the interface.** Print `build/testfit.stl` (~15 min, no supports):
+just the mount and a small loop. Check it drops onto the throat and does not
+rattle. Adjust `tongue_gap`.
+
+**3 — Print the clip**, then an attachment.
 
 ## Printing
 
-| Part | Orientation | Supports | Notes |
-|---|---|---|---|
-| `clip` | as exported — standing on end, handle axis vertical | none | the profile is a prism, so nothing overhangs |
-| `testfit` | as exported | none | grows upward off the crown |
-| `cupholder` | as exported — ring axis vertical | **touching buildplate** | only needed under the tongue |
-| `gauge` | flat | none | |
+| Part | Orientation | Supports |
+|---|---|---|
+| `clip` | as exported — standing on end, bar axis vertical | none |
+| `testfit` | as exported | none |
+| `cupholder` | as exported — ring axis vertical | **touching buildplate** (only under the tongue) |
+| `gauge` | flat | none |
 
-**PETG, not PLA.** The band has to spring open by `handle_h - mouth_w`
-(~3.6 mm at the default `mouth_frac`) to pass over the handle. PLA is likely to
-crack at that. PETG or ASA will take it.
+Standing the clip on end makes every face a vertical wall: no supports, the
+jaw's hoop stress runs along the extrusion lines, and the hanging load sits in
+the layer plane instead of peeling layers apart. The jaw and cap are
+deliberately adjacent along Z with **no gap**, so the cap's far leg prints on
+top of the jaw's far wall rather than starting in mid-air.
 
-5 perimeters, 40 % infill. The clip's strength comes almost entirely from
-perimeters running around the band.
-
-**Hardware (optional):** one M3 × 30 self-tapping screw for the pinch bolt.
-The near ear is clearance, the far ear is a pilot, so tightening pulls the jaws
-together. Set `use_bolt = false` for a hardware-free snap-on clip.
-
-The rubber grip is why the bolt is worth having: rubber takes a compression set,
-so a snap fit that feels tight today can be loose in a month. The bolt lets you
-take that up.
+PETG or PLA both work now — the light click is what buys that. 4 perimeters,
+30 % infill. No hardware.
 
 ## The attachment interface
 
-The clip's hook is a **throat** — a channel open at the top, between the tower
-(inboard) and the upturned tip (outboard). Attachments drop straight down into
-it: a tongue into the throat, a crown over the top, a spine down the outboard
-face, and two cheeks straddling the clip so nothing slides along the handle.
-Lift straight up to remove.
-
-At the default parameters:
+A **throat** on the outboard face: a channel open at the top, running the full
+length of the clip. Attachments drop straight down into it — a tongue into the
+throat, a crown over the top, a spine down the outboard face, and two cheeks
+straddling the clip so nothing slides along the bar. Lift straight up to remove.
 
 | | value |
 |---|---|
-| throat width | `hook_reach - hook_t` = 11 mm |
-| throat depth | `hook_rise` = 16 mm |
-| throat floor | y = 13 mm |
-| tower face | x = 23.5 mm |
-| clip width along handle | `clamp_len` = 30 mm |
+| throat width | `mnt_reach - mnt_t` = 10 mm |
+| throat depth | `mnt_rise` = 15 mm |
+| throat floor | y = 5 mm |
+| throat root | x = 25.4 mm |
+| clip length along bar | `body_len` = 46 mm |
 
-Coordinates are as fitted to the stroller: **+X outboard** (the way the hook
-points, away from the person pushing), **+Y up**, **+Z along the handle**, with
-z = 0 at the middle of the clip.
+Coordinates as fitted: **+X outboard**, **+Y up**, **+Z along the bar**, origin
+at the centre of the bar, z = 0 at the middle of the clip. The model is drawn
+in the seated position.
 
 To build your own attachment, call `hook_mount()` and put your geometry
 outboard of `spine_x + spine_t`:
@@ -94,46 +108,49 @@ outboard of `spine_x + spine_t`:
 include <stroller_clip.scad>
 
 module phone_tray() {
-    hook_mount(spine_bottom = -30);       // how far the spine runs down
+    hook_mount(spine_bottom = -30);          // how far the spine runs down
     translate([spine_x + spine_t - 2, -30, 0])
-        cube([40, 8, 60], center = false);   // your part goes here
+        cube([40, 8, 60]);                   // your part goes here
 }
 
 upright() phone_tray();
 ```
 
-Then add it to `checks.scad` and run `make check` before printing — that is
-what catches a clearance mistake on screen instead of on the bed.
+Then add it to `checks.scad` and run `make check` before printing.
 
-Because the throat is open at the top and the tip curls up, it also works as a
-plain hook: a bag handle or shopping bag loop drops into the channel and the
-tip stops it sliding off outboard.
+Because the throat is open at the top and the tip curls up, it doubles as a
+plain hook — a bag loop drops into the channel and the tip stops it sliding off.
 
 ## Tuning
 
 | Symptom | Change |
 |---|---|
-| Clip will not go on | raise `mouth_frac` |
-| Clip rotates on the handle | raise `rubber_bite`, or fit the bolt |
-| Clip is loose after a few weeks | fit the bolt; this is rubber creep, not a design fault |
-| Clip cracked going on | print in PETG; raise `mouth_frac` |
-| Attachment rattles on the hook | lower `fit_gap` |
-| Attachment will not seat | raise `fit_gap` |
-| Want more load capacity | raise `clamp_len` and `band_wall` |
+| Won't click on | raise `mouth_frac` |
+| Clicks on but falls off before you slide it down | lower `mouth_frac` |
+| Rattles once seated | lower `fit` |
+| Cap won't clear the bar when you lift | raise `slide_travel` (must stay > `cap_engage`) |
+| Feels like it could pop up over a bump | raise `cap_engage`, and `slide_travel` with it |
+| Rocks front-to-back on the bar | `handle_r` is too large — the bore is rounder than the bar |
+| Attachment rattles in the throat | lower `tongue_gap` |
+| Attachment won't seat | raise `tongue_gap` |
 
-## Known limitations
+## Caveats
 
 - **Unmeasured.** See the status note above.
-- **The sample cup holder hangs ~83 mm outboard** of the handle centreline —
-  ring radius plus hook reach. That is a long lever arm. It is fine for the
-  clip, but the cup sticks out further than a commercial holder. Reducing
-  `cup_id` is the quickest way to pull it in.
-- **The clip is not load rated.** It was sized against roughly 1.2 kg (a full
-  large tumbler); the calculated bearing stress in the throat is trivial, but
-  nothing has been physically tested.
+- **It needs 46 mm of straight bar.** This is the one to check before printing.
+  You asked for it at the corner of the stroller, and that is exactly where the
+  handle curves. If there is not a straight 46 mm run, drop `jaw_len` and
+  `cap_len` — but they cannot go much below ~15 mm each before the cap's far leg
+  loses the jaw wall underneath it and needs support to print. If the corner is
+  tightly curved, the honest fix is to model the bar's curve, which the current
+  code does not do: it assumes a straight prismatic bar.
+- **The cup holder sits ~87 mm outboard** of the bar centreline. Mostly ring
+  radius. Reducing `cup_id` is the quickest way to pull it in.
+- **Not load rated.** Sized against roughly 1.2 kg; nothing has been physically
+  tested.
 - **Don't hang heavy loads on a stroller handle.** Weight on the handle makes a
-  stroller tip backwards, which is a hazard independent of how strong this part
-  is. Chicco's own manual warns about this.
+  stroller tip backwards, a hazard independent of how strong this part is.
+  Chicco's manual warns about it.
 
 ## Files
 
@@ -141,5 +158,6 @@ tip stops it sliding off outboard.
 |---|---|
 | `stroller_clip.scad` | parameters, the clip, the attachment interface, sample cup holder |
 | `gauge.scad` | handle measuring gauge — print this first |
-| `checks.scad` | clearance checks, run via `make check` |
+| `profiles.scad` | cross-sections through the jaw and cap, for `make preview` |
+| `checks.scad` | five clearance checks, run via `make check` |
 | `print/gauge.stl` | ready to print, no OpenSCAD needed |
