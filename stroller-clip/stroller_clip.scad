@@ -127,8 +127,19 @@ arm_tilt  = 46.6;  // degrees the arm leans out from vertical
 // the claw the hook sits. 35 deg puts the saddle about 8 deg above
 // horizontal -- "angled slightly up", which is what the wide axis of
 // the oval does there.
-bend_r     = 155;   // measured off the tape
-hook_sweep = 35;    // degrees round the arc, claw to hook
+// The handle is STRAIGHT - 90 deg CORNER - STRAIGHT, not one gentle
+// sweep. The part has to be the same shape: a leg down the arm, a full
+// quarter turn, a leg along the top bar.
+//
+// This contradicts my own tape reading of R=155, and the tape loses. A
+// 90 degree turn at R=155 spans 219 mm of chord, so a part of that shape
+// could not be the 138 mm the last one was -- the two are not
+// reconcilable, and the reading came from guessing where a tape touched
+// in a photo. bend_r is the one dial here; everything else follows it.
+bend_r     = 70;    // corner radius of the handle's turn
+turn       = 90;    // degrees the handle turns through
+leg_dn     = 38;    // straight run from the claw up to the corner
+leg_up     = 46;    // straight run from the corner along the top bar
 throat_len = 34;
 
 // --- hook and claw ---------------------------------------------------
@@ -167,21 +178,24 @@ drain_r    = 9;
 //  Derived
 // =====================================================================
 
-// --- the arc, and where the hook lands on it -------------------------
-// Travelling UP the tube from the claw the tangent swings toward
-// horizontal, i.e. clockwise, so the centre lies to the RIGHT of the
-// up-direction. Getting this side wrong mirrors the whole bend.
-_tc      = [-sin(arm_tilt), -cos(arm_tilt)];      // tangent at the claw
-_up      = [-_tc[0], -_tc[1]];
-_n       = [_up[1], -_up[0]];                     // up rotated -90
-bend_c   = [-nom_run + bend_r * _n[0], -nom_drop + bend_r * _n[1]];
+// --- the path: leg, quarter turn, leg --------------------------------
+// Built FROM THE CLAW, which fits and does not move: up the arm
+// for leg_dn, a quarter turn of radius bend_r, then leg_up along the
+// top bar. Turning right (clockwise) going up, so the centre sits to
+// the right of the up-direction.
+_claw    = [-nom_run, -nom_drop];
+_u       = [sin(arm_tilt), cos(arm_tilt)];         // up the arm
+_right   = [_u[1], -_u[0]];
+_arc0    = [_claw[0] + leg_dn * _u[0], _claw[1] + leg_dn * _u[1]];
+bend_c   = [_arc0[0] + bend_r * _right[0], _arc0[1] + bend_r * _right[1]];
 
-ang_claw = atan2(-nom_drop - bend_c[1], -nom_run - bend_c[0]);
-ang_hook = ang_claw - hook_sweep;
-hook_pos = [bend_c[0] + bend_r * cos(ang_hook),
-            bend_c[1] + bend_r * sin(ang_hook)];
-hook_rot = ang_hook - 90;                          // saddle's tangent
-saddle_deg = hook_len / bend_r * 180 / PI;         // 34 mm of arc
+ang_claw = atan2(_arc0[1] - bend_c[1], _arc0[0] - bend_c[0]);  // arc start
+ang_hook = ang_claw - turn;                                    // arc end
+hook_rot = ang_hook - 90;                          // tangent at the arc end
+_t_up    = [cos(hook_rot), sin(hook_rot)];         // along the top bar
+hook_pos = [bend_c[0] + bend_r * cos(ang_hook) + (leg_up - hook_len / 2) * _t_up[0],
+            bend_c[1] + bend_r * sin(ang_hook) + (leg_up - hook_len / 2) * _t_up[1]];
+saddle_deg = hook_len / bend_r * 180 / PI;
 ang_mid    = (ang_hook + ang_claw) / 2;            // where the cup hangs
 
 arc_top   = arc_h / 2 + fit;
@@ -273,10 +287,16 @@ module tube_arc(a0, a1, w, h, r) {
 }
 
 // Rubber above, bare metal below, meeting midway between the two grips.
-ang_trans = ang_claw - hook_sweep / 2;
+ang_trans = ang_claw - turn / 2;
 
 module arc_bar(len = 300) {
-    tube_arc(ang_hook - 40, ang_trans, arc_w, arc_h, arc_r);
+    tube_arc(ang_hook, ang_trans, arc_w, arc_h, arc_r);
+    // straight leg along the top bar. arc_h is the IN-PLANE size and
+    // arc_w the front-to-back one, so they go in in that order.
+    translate([bend_c[0] + bend_r * cos(ang_hook),
+               bend_c[1] + bend_r * sin(ang_hook), 0])
+        rotate([0, 0, ang_hook]) rotate([90, 0, 0])
+            linear_extrude(leg_up + 30) rrect(arc_h, arc_w, arc_r);
 }
 
 module arm_bar(len = 240, up = 40) {
@@ -285,7 +305,12 @@ module arm_bar(len = 240, up = 40) {
     // round the bend -- it is the 29 mm axis that rotates from vertical
     // on the arc to side-to-side on the arm. Passing them swapped makes
     // the arm 29 mm deep, which reaches z = 14.5 and eats the strut.
-    tube_arc(ang_trans, ang_claw + 25, arm_h, arm_w, arm_r);
+    tube_arc(ang_trans, ang_claw, arm_h, arm_w, arm_r);
+    // straight leg down the arm, past the claw
+    translate([bend_c[0] + bend_r * cos(ang_claw),
+               bend_c[1] + bend_r * sin(ang_claw), 0])
+        rotate([0, 0, ang_claw + 180]) rotate([90, 0, 0])
+            linear_extrude(leg_dn + 90) rrect(arm_w, arm_h, arm_r);
 }
 
 // =====================================================================
@@ -367,16 +392,34 @@ band_out = 20;   // radially outboard of the tube's centreline
 band_in  = 34;   // radially inboard, toward the cup
 band_pad = 7;    // angular overrun past each grip
 
+// Straight leg, quarter turn, straight leg -- the handle's actual shape.
+// A bare sector (what this was) is all corner and no legs, which reads
+// as a gentle sweep rather than a turn.
+// A straight run of band leaving the arc at angle a. rotate(a+90) puts
+// local +X on the counter-clockwise tangent and local +Y pointing in
+// toward the bend's centre, so the band spans -band_out .. +band_in.
+// dirn = +1 runs counter-clockwise, -1 clockwise.
+module leg_2d(a, len, dirn) {
+    translate([bend_c[0] + bend_r * cos(a), bend_c[1] + bend_r * sin(a)])
+        rotate(a + 90)
+            translate([dirn > 0 ? 0 : -len, -band_out])
+                square([len, band_out + band_in]);
+}
+
 module strut_2d() {
+    // the corner
     translate(bend_c)
         intersection() {
             difference() {
                 circle(r = bend_r + band_out);
                 circle(r = bend_r - band_in);
             }
-            wedge_2d(bend_r + band_out + 5,
-                     ang_hook - band_pad, ang_claw + band_pad);
+            wedge_2d(bend_r + band_out + 5, ang_hook, ang_claw);
         }
+    // Going claw -> hook the angle DECREASES, so running back toward the
+    // claw is counter-clockwise and running on past the hook is clockwise.
+    leg_2d(ang_claw, leg_dn + band_pad,  1);
+    leg_2d(ang_hook, leg_up + band_pad, -1);
 }
 
 module strut() {
