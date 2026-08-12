@@ -84,14 +84,28 @@ fit      = 0.4;  // clearance to the bars
 arm_slop = 0.35; // extra room in the claw, to absorb angle error
 wall     = 4;
 
-// --- corner geometry --- *** STILL NOMINAL — MEASURE THESE *** -------
+// --- corner geometry --- measured, see solve_corner.py ---------------
 // From the spot on the arc where the hook goes, to the spot on the arm
 // where the claw goes. Only the component perpendicular to the arm
 // really matters; see ANGLES above.
+//
+// Read off the corner gauge: window 1 (35 mm down) edges at 18 and 66,
+// window 2 (105 mm down) edges at 94 and 138. The two edges fitted
+// separately give 47.35 and 45.81 degrees, so the marks are good to
+// about a millimetre. Run the axis back to the arc's centreline and it
+// lands 5 mm from the gauge's origin -- the gauge butts against the
+// bend, so that near-zero is what says it was held in the handle's
+// plane. It was 46.6, not the 12 this was first drawn around.
+//
+// The claw sits 75 mm down rather than further: the arm is steep, so
+// sliding along it barely lifts the hook, and below about 61 mm of drop
+// the caddy can no longer be taken off (checks.scad, liftoff). 75 keeps
+// ~13 mm of margin on that while staying the shortest -- hence the
+// stiffest -- strut that clears.
 
-nom_run   = 70;  // horizontal, hook to claw
-nom_drop  = 90;  // vertical,   hook to claw
-arm_tilt  = 12;  // degrees the arm leans out from vertical
+nom_run   = 84.3;  // horizontal, hook to claw
+nom_drop  = 75;    // vertical,   hook to claw
+arm_tilt  = 46.6;  // degrees the arm leans out from vertical
 
 // --- hook and claw ---------------------------------------------------
 

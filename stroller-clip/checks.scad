@@ -20,8 +20,8 @@
 include <stroller_clip.scad>
 
 check = "arc_bar";
-// [arc_bar, arm_bar, mount, cup_bars, liftoff, trapped, fused_bars,
-//  fused_lift, exists_caddy, exists_cup, exists_fused]
+// [arc_bar, arm_bar, mount, cup_bars, insert, liftoff, trapped,
+//  fused_bars, fused_lift, exists_caddy, exists_cup, exists_fused]
 
 // --- the caddy against the handle ------------------------------------
 
@@ -81,6 +81,36 @@ module check_fused_lift() {
         union() { arc_bar(); arm_bar(); }
         for (d = [0 : lift_step : lift_mm])
             translate([d * sin(arm_tilt), d * cos(arm_tilt), 0]) fused();
+    }
+}
+
+// --- can a cup actually go IN? ---------------------------------------
+//
+//  cup_bars only proves the holder does not touch the handle while it
+//  sits there. It says nothing about the path a cup takes on the way
+//  in, which is straight down into the ring -- and the arc runs right
+//  over that. A holder can pass every clearance check here and still be
+//  unusable because the handle bar is in the way of your hand.
+//
+//  So: sweep the ring's bore vertically upward and intersect it with
+//  the bars. Anything solid is the handle fouling the insertion path.
+
+insert_h = 220;   // a tall travel mug plus room for fingers
+
+module insert_path() {
+    translate([0, ring_top, cup_cz])
+        cylinder(h = insert_h, r = cup_id / 2);
+}
+
+module check_insert() {
+    intersection() { insert_path(); union() { arc_bar(); arm_bar(); } }
+}
+
+// Same question for the fused variant, whose cup sits ~30 mm closer in.
+module check_fused_insert() {
+    intersection() {
+        translate(cup_pos) cylinder(h = insert_h, r = cup_id / 2);
+        union() { arc_bar(); arm_bar(); }
     }
 }
 

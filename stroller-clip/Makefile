@@ -41,7 +41,7 @@ check: | $(OUT)
 	  if solid $$c; then echo "ok    $$c (renders)"; \
 	  else echo "FAIL  $$c: part is EMPTY -- every clearance check below is meaningless"; fail=1; fi; \
 	done; \
-	for c in arc_bar arm_bar mount cup_bars liftoff fused_bars fused_lift; do run $$c; \
+	for c in arc_bar arm_bar mount cup_bars insert fused_insert liftoff fused_bars fused_lift; do run $$c; \
 	  if solid $$c; then echo "FAIL  $$c: interference"; fail=1; \
 	  else echo "ok    $$c (clear)"; fi; \
 	done; \
@@ -61,6 +61,12 @@ preview: | $(OUT)
 	$(XVFB) $(SCAD) -o $(OUT)/raised.png --imgsize=900,980 --projection=o \
 	  --viewall --autocenter --camera=0,0,0,0,0,0,0 \
 	  -D 'part="raised"' stroller_clip.scad
+	@# Looking down the handle. This is the one that shows the cup's bore
+	@# standing clear of both bars -- the front view stacks them in
+	@# projection and makes a clear gap look like an overlap.
+	$(XVFB) $(SCAD) -o $(OUT)/plan.png --imgsize=900,700 --projection=o \
+	  --viewall --autocenter --camera=0,0,0,90,0,0,0 \
+	  -D 'part="assembly"' stroller_clip.scad
 
 clean:
 	rm -rf $(OUT)
