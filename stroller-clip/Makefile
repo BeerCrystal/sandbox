@@ -31,17 +31,32 @@ $(OUT)/%.stl: stroller_clip.scad | $(OUT)
 # means the attachment fouls the clip. Exported as ASCII on purpose --
 # an empty binary STL still writes an 84-byte header, so file size
 # alone would not tell us anything.
+#
+# The exit code is checked too, and it matters more than it looks.
+# openscad exits 0 for a solid result and 1 for an empty one, so ANY
+# other code -- a crash, an out-of-memory, a timeout kill -- also leaves
+# no file, and "no file" is exactly what a passing clearance check looks
+# like. A killed render would report itself as clear. That is not
+# hypothetical: it happened during development on the liftoff sweep,
+# which is slow enough to hit a timeout, and reported green while
+# genuinely interfering.
 check: | $(OUT)
 	@fail=0; \
 	run() { rm -f $(OUT)/chk_$$1.stl; \
 	  $(SCAD) -o $(OUT)/chk_$$1.stl -D 'part="none"' -D "check=\"$$1\"" \
-	    $(CUPD) checks.scad >/dev/null 2>&1; }; \
+	    $(CUPD) checks.scad >/dev/null 2>&1; \
+	  rc=$$?; \
+	  if [ $$rc -ne 0 ] && [ $$rc -ne 1 ]; then \
+	    echo "FAIL  $$1: openscad exited $$rc -- crashed or killed, NOT clear"; \
+	    return 9; \
+	  fi; return 0; }; \
 	solid() { grep -q vertex $(OUT)/chk_$$1.stl 2>/dev/null; }; \
 	for c in exists_caddy exists_cup exists_fused; do run $$c; \
 	  if solid $$c; then echo "ok    $$c (renders)"; \
 	  else echo "FAIL  $$c: part is EMPTY -- every clearance check below is meaningless"; fail=1; fi; \
 	done; \
-	for c in arc_bar arm_bar mount cup_bars insert fused_insert liftoff fused_bars fused_lift; do run $$c; \
+	for c in arc_bar arm_bar mount cup_bars insert fused_insert liftoff fused_bars fused_lift; do \
+	  if ! run $$c; then fail=1; continue; fi; \
 	  if solid $$c; then echo "FAIL  $$c: interference"; fail=1; \
 	  else echo "ok    $$c (clear)"; fi; \
 	done; \

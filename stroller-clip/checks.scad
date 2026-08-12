@@ -38,28 +38,30 @@ module check_cup_bars() {
 
 // --- taking it off ---------------------------------------------------
 
-// Travel along the handle. On a STRAIGHT bar this was a translation up
-// the arm's axis. On the real bar it cannot be: the handle is an arc,
-// both grips sit on that arc, and the only motion that keeps them both
-// engaged is a rotation about the bend's centre. Sliding in a straight
-// line binds immediately, which is what a translation-based check was
-// reporting as an interference -- correctly, but about the wrong motion.
+// Lift clear: slide UP the arm's straight leg until the saddle comes off
+// the top bar.
 //
-// Stepped union rather than hull() — these shapes are non-convex, and
-// the convex hull of two poses sweeps through material the part never
-// actually occupies.
-lift_deg  = 22;
-lift_step = 1;
-
-module about_bend(a) {
-    translate([bend_c[0], bend_c[1], 0]) rotate([0, 0, a])
-        translate([-bend_c[0], -bend_c[1], 0]) children();
-}
+// This is a translation again, not the rotation the last version used.
+// That rotation was right while the part was one continuous arc riding a
+// constant radius. It is wrong now: the part is a vee of two straight
+// legs, and rotating it about the bend's centre swings both legs through
+// the metal -- which is exactly what the check reported.
+//
+// The arm leg IS straight, so the claw slides freely along it, and the
+// top bar leaves at 45 degrees, so sliding up the arm carries the saddle
+// away from the top bar at sin(45) = 0.71 mm per mm of travel.
+//
+// Intersected against the top bar alone. The claw riding along the arm
+// is the mechanism, not an interference, so including arm_bar here would
+// fail the check for the part working as intended.
+lift_mm   = 48;
+lift_step = 1.5;
 
 module check_liftoff() {
     intersection() {
-        union() { arc_bar(); arm_bar(); }
-        for (a = [-lift_deg : lift_step : lift_deg]) about_bend(a) caddy();
+        arc_bar();
+        for (d = [0 : lift_step : lift_mm])
+            translate([d * sin(arm_tilt), d * cos(arm_tilt), 0]) caddy();
     }
 }
 
@@ -88,8 +90,9 @@ module check_fused_bars() {
 
 module check_fused_lift() {
     intersection() {
-        union() { arc_bar(); arm_bar(); }
-        for (a = [-lift_deg : lift_step : lift_deg]) about_bend(a) fused();
+        arc_bar();
+        for (d = [0 : lift_step : lift_mm])
+            translate([d * sin(arm_tilt), d * cos(arm_tilt), 0]) fused();
     }
 }
 
