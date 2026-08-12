@@ -70,6 +70,21 @@ axis extrapolated to depth 0: 5.0 mm from the origin
 
 **`arm_tilt` = 46.6°**, not the 12° this was first drawn around.
 
+**The top bar turns at the corner.** It does not carry on horizontally — it
+runs *perpendicular to the side arm*, so the two bars meet at a right angle.
+The first build missed this entirely: `arc_bar()` was a straight prism along X
+and the hook was extruded to match, so on the real handle the saddle landed
+cocked over, touched at one point, and slid off. Every check passed anyway,
+because the reference geometry it was checked against had no turn in it either.
+
+The saddle now rotates with the bar (`hook_rot = -arm_tilt`). The throat does
+not — it carries the cup, which has to stay upright in world Y. They used to be
+one extrusion, which forced one of the two to be wrong.
+
+The sign is easy to get backwards and worth stating: rotating by `+arm_tilt`
+puts the bar antiparallel to the arm — one straight line, no corner at all.
+`-arm_tilt` is the perpendicular one.
+
 That last line is what validates the reading. The gauge butts against the bend,
 so the origin *is* the corner — and the axis, extended back independently from
 the two windows, lands 5 mm from it. Nothing in the arithmetic forces that; it

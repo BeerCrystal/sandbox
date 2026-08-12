@@ -3,11 +3,17 @@
 //  slides down, and locks under the top arc.
 //
 //  World frame, standing behind the stroller:
-//      +X   along the top arc, toward the middle of the handle
+//      +X   toward the middle of the handle
 //      +Y   up
 //      +Z   inboard, toward the seat. The cup hangs this way.
-//  The handle's U lies in the XY plane. The arc runs along X; the side
-//  arm hangs from the corner, leaning out by arm_tilt.
+//  The handle's U lies in the XY plane. The side arm hangs from the
+//  corner, leaning out by arm_tilt.
+//
+//  The top bar does NOT run along X. It turns at the corner and runs
+//  perpendicular to the side arm, hook_rot off horizontal -- so the two
+//  bars meet at a right angle, not the shallow one the first draft
+//  assumed. The saddle follows that turn; the throat does not, because
+//  the cup has to stay upright in world Y.
 //
 //  The hook sits at the ORIGIN on the arc. The claw sits at
 //  (-nom_run, -nom_drop) on the arm. The model is drawn SEATED.
@@ -107,9 +113,23 @@ nom_run   = 84.3;  // horizontal, hook to claw
 nom_drop  = 75;    // vertical,   hook to claw
 arm_tilt  = 46.6;  // degrees the arm leans out from vertical
 
+// The top bar does not continue horizontally through the corner -- it
+// turns, and runs perpendicular to the side arm.
+//
+// The sign matters and is easy to get backwards. The arm points
+// (-sin, -cos) = (-0.727, -0.687). Rotating the bar by +arm_tilt gives
+// (+0.687, +0.727), whose dot with the arm is -0.999 -- that is
+// ANTIPARALLEL, one straight line, not a corner. -arm_tilt gives
+// (+0.687, -0.727), dot 0.000. That is the perpendicular one.
+//
+// Derived from arm_tilt rather than typed as -46.6 so the two cannot
+// drift apart if the corner is ever remeasured.
+hook_rot  = -arm_tilt;  // degrees the top bar turns, in the handle plane
+throat_len = 34;        // the throat stays upright, so it keeps its own
+
 // --- hook and claw ---------------------------------------------------
 
-hook_len    = 34;   // along the arc
+hook_len    = 34;   // along the top bar
 hook_engage = 10;   // how far the legs reach down past the arc's top
 claw_len    = 20;   // along the arm — short, for angle tolerance
 claw_frac   = 0.90; // mouth width as a fraction of arm_w. The click.
@@ -216,8 +236,9 @@ module at_arm() {
 // --- the handle, for fit checks. Not printed. ------------------------
 
 module arc_bar(len = 300) {
-    rotate([0, 90, 0]) linear_extrude(len, center = true)
-        rrect(arc_w, arc_h, arc_r);
+    along_top_bar()
+        rotate([0, 90, 0]) linear_extrude(len, center = true)
+            rrect(arc_w, arc_h, arc_r);
 }
 
 module arm_bar(len = 240, up = 40) {
@@ -229,10 +250,20 @@ module arm_bar(len = 240, up = 40) {
 //  The caddy — one piece
 // =====================================================================
 
-// Hook and throat, drawn in the arc's cross-section: local x -> world Z,
-// local y -> world Y, extruded along the arc.
-module hook_profile() {
+// Drawn in the arc's cross-section: local x -> world Z, local y -> world
+// Y, extruded along the bar.
+//
+// The saddle and the throat are separate because they no longer point
+// the same way. The top bar turns at the corner and runs perpendicular
+// to the side arm, so the saddle has to lie along THAT, rotated by
+// hook_rot -- while the throat carries the cup and has to stay upright
+// in world Y or the drink tips. Extruding them together, as this did,
+// forces one of the two to be wrong.
+module saddle_profile() {
     box(-hook_out, hook_bot, hook_out, arc_top + wall);      // inverted U
+}
+
+module throat_profile() {
     // Web tying the throat back to the hook. It starts at strut_z0, not
     // inside it: any material within the arc's envelope is hidden by
     // the bar cut while seated, then fouls the bar on the way off.
@@ -241,9 +272,16 @@ module hook_profile() {
     box(tip_inner, throat_y - 1, tip_outer, throat_top);     // upturned tip
 }
 
+// Rotating about world Z turns the saddle within the handle plane,
+// which is where the top bar's turn happens.
+module along_top_bar() { rotate([0, 0, hook_rot]) children(); }
+
 module hook_and_throat() {
-    rotate([0, -90, 0]) linear_extrude(hook_len, center = true)
-        hook_profile();
+    along_top_bar()
+        rotate([0, -90, 0]) linear_extrude(hook_len, center = true)
+            saddle_profile();
+    rotate([0, -90, 0]) linear_extrude(throat_len, center = true)
+        throat_profile();
 }
 
 // A flat plate lying inboard of both bars, crossing the corner.
@@ -284,8 +322,9 @@ module claw_cut(over = 2) {
 module caddy() {
     difference() {
         union() { hook_and_throat(); strut(); claw(); }
-        rotate([0, -90, 0]) linear_extrude(hook_len + 2, center = true)
-            rrect(arc_w + 2 * fit, arc_h + 2 * fit, arc_r + fit);
+        along_top_bar()
+            rotate([0, -90, 0]) linear_extrude(hook_len + 2, center = true)
+                rrect(arc_w + 2 * fit, arc_h + 2 * fit, arc_r + fit);
         claw_cut();
     }
 }
