@@ -182,6 +182,7 @@ hook_pos = [bend_c[0] + bend_r * cos(ang_hook),
             bend_c[1] + bend_r * sin(ang_hook)];
 hook_rot = ang_hook - 90;                          // saddle's tangent
 saddle_deg = hook_len / bend_r * 180 / PI;         // 34 mm of arc
+ang_mid    = (ang_hook + ang_claw) / 2;            // where the cup hangs
 
 arc_top   = arc_h / 2 + fit;
 hook_bot  = arc_top - hook_engage;
@@ -338,17 +339,44 @@ module swept_on_arc(deg) {
 
 module hook_and_throat() {
     swept_on_arc(saddle_deg) saddle_profile();
-    rotate([0, -90, 0]) linear_extrude(throat_len, center = true)
-        throat_profile();
+    translate([bend_c[0] + bend_r * cos(ang_mid),
+               bend_c[1] + bend_r * sin(ang_mid), 0])
+        rotate([0, -90, 0]) linear_extrude(throat_len, center = true)
+            throat_profile();
 }
 
 // A flat plate lying inboard of both bars, crossing the corner.
+// A wedge of the bend, for trimming the band to its angular span.
+module wedge_2d(r, a0, a1, steps = 48) {
+    polygon(concat([[0, 0]],
+        [for (i = [0 : steps]) let(a = a0 + (a1 - a0) * i / steps)
+            [r * cos(a), r * sin(a)]]));
+}
+
+// The body is a BAND FOLLOWING THE BEND, not a hull.
+//
+// hull() was the bug, and it is a bug by definition: a convex hull is
+// straight-sided, so no arrangement of blobs inside one can ever produce
+// a curve. The old body cut a flat chord straight across the inside of
+// the bend while the handle curved away from it. Only the 34 mm saddle
+// touched.
+//
+// Swept between the two grips instead, and carried inboard of the tube
+// so the cup hangs in the crook of the curve.
+band_out = 20;   // radially outboard of the tube's centreline
+band_in  = 34;   // radially inboard, toward the cup
+band_pad = 7;    // angular overrun past each grip
+
 module strut_2d() {
-    hull() {
-        rrect(28, 34, 8);
-        translate(hook_pos) circle(r = 16);
-        translate([-nom_run, -nom_drop]) circle(r = claw_out);
-    }
+    translate(bend_c)
+        intersection() {
+            difference() {
+                circle(r = bend_r + band_out);
+                circle(r = bend_r - band_in);
+            }
+            wedge_2d(bend_r + band_out + 5,
+                     ang_hook - band_pad, ang_claw + band_pad);
+        }
 }
 
 module strut() {
