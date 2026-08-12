@@ -260,9 +260,12 @@ rather than failing.
 
 ## Caveats
 
-- **The corner geometry is measured, not verified on the stroller.** The
-  numbers come from one gauge reading; the `testfit` part is there to check them
-  cheaply before committing to the full print.
+- **The corner geometry is measured, not verified on the stroller.** It comes
+  from one gauge reading. Print `caddy.stl` first and try it on the handle: it
+  carries both the hook and the claw, so it proves the corner, and at 75 KB and
+  ~2 h it costs a fraction of the fused part. (`testfit` will not tell you this
+  — it exercises the dovetail interface between caddy and attachment, and has
+  no hook or claw on it at all.)
 - **The hook assumes a straight 34 mm run** of arc. It sits past the bend where
   the arc is roughly level, but the arc is still gently curved — if it rocks,
   drop `hook_len`.
