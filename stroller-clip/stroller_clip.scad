@@ -132,12 +132,17 @@ arm_tilt  = 46.6;  // degrees the arm leans out from vertical
 // quarter turn, a leg along the top bar.
 //
 // This contradicts my own tape reading of R=155, and the tape loses. A
-// 90 degree turn at R=155 spans 219 mm of chord, so a part of that shape
-// could not be the 138 mm the last one was -- the two are not
-// reconcilable, and the reading came from guessing where a tape touched
-// in a photo. bend_r is the one dial here; everything else follows it.
+// turn of any size at R=155 spans far more chord than a part this long
+// has; the reading came from guessing where a tape touched in a photo
+// and cannot stand against the object. bend_r is the one dial here.
+//
+// The turn is 45, confirmed against the handle. A sketch over the slicer
+// view read as 90, but that view has the part tipped on its side for
+// printing, which foreshortens in-plane angles -- a real 45 degree bend
+// genuinely looks like a right angle there. Worth remembering before
+// measuring an angle off a print-orientation screenshot again.
 bend_r     = 70;    // corner radius of the handle's turn
-turn       = 90;    // degrees the handle turns through
+turn       = 45;    // degrees the handle turns through
 leg_dn     = 38;    // straight run from the claw up to the corner
 leg_up     = 46;    // straight run from the corner along the top bar
 throat_len = 34;
@@ -362,8 +367,17 @@ module swept_on_arc(deg) {
                         children();
 }
 
+// The hook sits out on the STRAIGHT top-bar leg, not on the corner, so
+// the saddle is a straight extrusion along that leg. It was still being
+// swept around the corner arc, which put it -- and the bar cut that
+// follows it -- in the wrong place entirely once the path grew legs.
+module on_top_bar() {
+    translate([hook_pos[0], hook_pos[1], 0]) rotate([0, 0, hook_rot])
+        rotate([0, -90, 0]) children();
+}
+
 module hook_and_throat() {
-    swept_on_arc(saddle_deg) saddle_profile();
+    on_top_bar() linear_extrude(hook_len, center = true) saddle_profile();
     translate([bend_c[0] + bend_r * cos(ang_mid),
                bend_c[1] + bend_r * sin(ang_mid), 0])
         rotate([0, -90, 0]) linear_extrude(throat_len, center = true)
@@ -452,7 +466,7 @@ module claw_cut(over = 2) {
 module caddy() {
     difference() {
         union() { hook_and_throat(); strut(); claw(); }
-        swept_on_arc(saddle_deg + 4)
+        on_top_bar() linear_extrude(hook_len + 2, center = true)
             rrect(arc_w + 2 * fit, arc_h + 2 * fit, arc_r + fit);
         claw_cut();
     }
