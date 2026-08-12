@@ -38,18 +38,28 @@ module check_cup_bars() {
 
 // --- taking it off ---------------------------------------------------
 
-// Slide up ALONG the arm; the hook must lift clear of the arc. Stepped
-// union rather than hull() — these shapes are non-convex, and the
-// convex hull of two poses sweeps through material the part never
+// Travel along the handle. On a STRAIGHT bar this was a translation up
+// the arm's axis. On the real bar it cannot be: the handle is an arc,
+// both grips sit on that arc, and the only motion that keeps them both
+// engaged is a rotation about the bend's centre. Sliding in a straight
+// line binds immediately, which is what a translation-based check was
+// reporting as an interference -- correctly, but about the wrong motion.
+//
+// Stepped union rather than hull() — these shapes are non-convex, and
+// the convex hull of two poses sweeps through material the part never
 // actually occupies.
-lift_mm   = 34;
-lift_step = 1.5;
+lift_deg  = 22;
+lift_step = 1;
+
+module about_bend(a) {
+    translate([bend_c[0], bend_c[1], 0]) rotate([0, 0, a])
+        translate([-bend_c[0], -bend_c[1], 0]) children();
+}
 
 module check_liftoff() {
     intersection() {
-        arc_bar();
-        for (d = [0 : lift_step : lift_mm])
-            translate([d * sin(arm_tilt), d * cos(arm_tilt), 0]) caddy();
+        union() { arc_bar(); arm_bar(); }
+        for (a = [-lift_deg : lift_step : lift_deg]) about_bend(a) caddy();
     }
 }
 
@@ -79,8 +89,7 @@ module check_fused_bars() {
 module check_fused_lift() {
     intersection() {
         union() { arc_bar(); arm_bar(); }
-        for (d = [0 : lift_step : lift_mm])
-            translate([d * sin(arm_tilt), d * cos(arm_tilt), 0]) fused();
+        for (a = [-lift_deg : lift_step : lift_deg]) about_bend(a) fused();
     }
 }
 

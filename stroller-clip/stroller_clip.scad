@@ -113,19 +113,23 @@ nom_run   = 84.3;  // horizontal, hook to claw
 nom_drop  = 75;    // vertical,   hook to claw
 arm_tilt  = 46.6;  // degrees the arm leans out from vertical
 
-// The top bar does not continue horizontally through the corner -- it
-// turns, and runs perpendicular to the side arm.
+// The handle is ONE CONTINUOUS ARC, not two bars meeting at a corner.
+// Radius from a tape laid across the bend: chord 200 mm, sagitta 37 mm,
+// R = c^2/8s + s/2 = 155 mm.
 //
-// The sign matters and is easy to get backwards. The arm points
-// (-sin, -cos) = (-0.727, -0.687). Rotating the bar by +arm_tilt gives
-// (+0.687, +0.727), whose dot with the arm is -0.999 -- that is
-// ANTIPARALLEL, one straight line, not a corner. -arm_tilt gives
-// (+0.687, -0.727), dot 0.000. That is the perpendicular one.
+// Everything about the hook now follows from that. The claw's position
+// is fixed -- it fits, and it is not moving -- so the arc is pinned by
+// the claw and its tangent, and the hook can only sit somewhere ON that
+// arc. Its position AND the angle its saddle lies at are both derived.
+// Neither is a dial to guess at, which is the whole point.
 //
-// Derived from arm_tilt rather than typed as -46.6 so the two cannot
-// drift apart if the corner is ever remeasured.
-hook_rot  = -arm_tilt;  // degrees the top bar turns, in the handle plane
-throat_len = 34;        // the throat stays upright, so it keeps its own
+// hook_sweep is the one remaining choice: how far round the arc from
+// the claw the hook sits. 35 deg puts the saddle about 8 deg above
+// horizontal -- "angled slightly up", which is what the wide axis of
+// the oval does there.
+bend_r     = 155;   // measured off the tape
+hook_sweep = 35;    // degrees round the arc, claw to hook
+throat_len = 34;
 
 // --- hook and claw ---------------------------------------------------
 
@@ -162,6 +166,22 @@ drain_r    = 9;
 // =====================================================================
 //  Derived
 // =====================================================================
+
+// --- the arc, and where the hook lands on it -------------------------
+// Travelling UP the tube from the claw the tangent swings toward
+// horizontal, i.e. clockwise, so the centre lies to the RIGHT of the
+// up-direction. Getting this side wrong mirrors the whole bend.
+_tc      = [-sin(arm_tilt), -cos(arm_tilt)];      // tangent at the claw
+_up      = [-_tc[0], -_tc[1]];
+_n       = [_up[1], -_up[0]];                     // up rotated -90
+bend_c   = [-nom_run + bend_r * _n[0], -nom_drop + bend_r * _n[1]];
+
+ang_claw = atan2(-nom_drop - bend_c[1], -nom_run - bend_c[0]);
+ang_hook = ang_claw - hook_sweep;
+hook_pos = [bend_c[0] + bend_r * cos(ang_hook),
+            bend_c[1] + bend_r * sin(ang_hook)];
+hook_rot = ang_hook - 90;                          // saddle's tangent
+saddle_deg = hook_len / bend_r * 180 / PI;         // 34 mm of arc
 
 arc_top   = arc_h / 2 + fit;
 hook_bot  = arc_top - hook_engage;
@@ -235,15 +255,36 @@ module at_arm() {
 
 // --- the handle, for fit checks. Not printed. ------------------------
 
+// The handle is one tube, so it gets modelled as one tube. Sweeping a
+// section of it between two angles on the bend.
+//
+// Splitting it into an "arc" and an "arm" that each ran past the other
+// made both solids cover the same physical metal near the claw, and the
+// clearance checks then reported the claw's legitimate grip as an
+// interference. Two reference solids may not overlap.
+module tube_arc(a0, a1, w, h, r) {
+    translate([bend_c[0], bend_c[1], 0])
+        rotate([0, 0, a0])
+            rotate_extrude(angle = a1 - a0, $fn = 240)
+                translate([bend_r, 0])
+                    rotate(-90)
+                        rrect(w, h, r);
+}
+
+// Rubber above, bare metal below, meeting midway between the two grips.
+ang_trans = ang_claw - hook_sweep / 2;
+
 module arc_bar(len = 300) {
-    along_top_bar()
-        rotate([0, 90, 0]) linear_extrude(len, center = true)
-            rrect(arc_w, arc_h, arc_r);
+    tube_arc(ang_hook - 40, ang_trans, arc_w, arc_h, arc_r);
 }
 
 module arm_bar(len = 240, up = 40) {
-    at_arm() translate([0, up, 0]) rotate([90, 0, 0])
-        linear_extrude(len) rrect(arm_w, arm_h, arm_r);
+    // arm_h then arm_w, NOT the other way round. tube_arc's first size
+    // is the front-to-back one, and that axis stays 19 mm the whole way
+    // round the bend -- it is the 29 mm axis that rotates from vertical
+    // on the arc to side-to-side on the arm. Passing them swapped makes
+    // the arm 29 mm deep, which reaches z = 14.5 and eats the strut.
+    tube_arc(ang_trans, ang_claw + 25, arm_h, arm_w, arm_r);
 }
 
 // =====================================================================
@@ -272,14 +313,31 @@ module throat_profile() {
     box(tip_inner, throat_y - 1, tip_outer, throat_top);     // upturned tip
 }
 
-// Rotating about world Z turns the saddle within the handle plane,
-// which is where the top bar's turn happens.
-module along_top_bar() { rotate([0, 0, hook_rot]) children(); }
+// Sweep a cross-section along the bend. rotate_extrude maps profile x
+// to radius and profile y to Z, so the profile is transposed on the way
+// in: local y (radially out) -> radius, local x (front-back) -> Z.
+//
+// A straight 34 mm saddle on a 155 mm radius stands 34^2/(8R) = 0.93 mm
+// off the bar at its ends, against 0.4 mm of fit clearance. That is the
+// rocking -- it is a curvature problem, not an angle problem, and no
+// amount of rotating a STRAIGHT saddle fixes it.
+module swept_on_arc(deg) {
+    translate([bend_c[0], bend_c[1], 0])
+        rotate([0, 0, ang_hook - deg / 2])
+            rotate_extrude(angle = deg, $fn = 240)
+                translate([bend_r, 0])
+                    // (x,y) -> (y,-x). A transpose would be the obvious
+                    // map, but its determinant is -1, which reverses the
+                    // polygon's winding and makes rotate_extrude build
+                    // the solid inside out. This rotation is det +1. The
+                    // sign it puts on the axial axis is harmless because
+                    // both profiles swept here are symmetric front-to-back.
+                    rotate(-90)
+                        children();
+}
 
 module hook_and_throat() {
-    along_top_bar()
-        rotate([0, -90, 0]) linear_extrude(hook_len, center = true)
-            saddle_profile();
+    swept_on_arc(saddle_deg) saddle_profile();
     rotate([0, -90, 0]) linear_extrude(throat_len, center = true)
         throat_profile();
 }
@@ -288,6 +346,7 @@ module hook_and_throat() {
 module strut_2d() {
     hull() {
         rrect(28, 34, 8);
+        translate(hook_pos) circle(r = 16);
         translate([-nom_run, -nom_drop]) circle(r = claw_out);
     }
 }
@@ -322,9 +381,8 @@ module claw_cut(over = 2) {
 module caddy() {
     difference() {
         union() { hook_and_throat(); strut(); claw(); }
-        along_top_bar()
-            rotate([0, -90, 0]) linear_extrude(hook_len + 2, center = true)
-                rrect(arc_w + 2 * fit, arc_h + 2 * fit, arc_r + fit);
+        swept_on_arc(saddle_deg + 4)
+            rrect(arc_w + 2 * fit, arc_h + 2 * fit, arc_r + fit);
         claw_cut();
     }
 }
@@ -481,6 +539,9 @@ module assembly(lift = 0) {
 // the throat opens upward.
 module lay() { rotate([90, 0, 0]) rotate([0, 0, arm_tilt]) children(); }
 
+echo(str("bend centre ", bend_c, "  hook at ", hook_pos));
+echo(str("saddle lies ", -hook_rot, " deg off horizontal, sweeping ",
+         saddle_deg, " deg of arc"));
 echo(str("claw springs ", arm_w - claw_mouth, " mm to click on"));
 echo(str("hook allows ", 2 * fit, " mm of front-to-back play when seated"));
 echo(str("angle slack ", claw_len * sin(5) / 2,
