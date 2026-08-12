@@ -53,11 +53,43 @@ The bend happens *in* the handle plane, so the 19 mm axis stays front-to-back
 all the way round while the 29 mm axis rotates from vertical on the arc to
 side-to-side on the arm. That is why `arc_h` and `arm_w` are the same number.
 
-**Still needed — the corner.** One piece means the geometry is baked in. But
-this is **two readings, not three numbers**: the claw slides along the arm, so
-where it sits along the arm is a design choice, not a measurement. What is
-actually needed is the arm's *axis line* relative to the hook spot — and two
-crossings define a line.
+**Done — the corner.** One piece means the geometry is baked in. But this is
+**two readings, not three numbers**: the claw slides along the arm, so where it
+sits along the arm is a design choice, not a measurement. What is actually
+needed is the arm's *axis line* relative to the hook spot — and two crossings
+define a line.
+
+Measured off the corner gauge:
+
+```
+window 1 (35 mm down):  edges  18 /  66    centre  42.0
+window 2 (105 mm down): edges  94 / 138    centre 116.0
+edges fitted separately: 47.35 / 45.81 deg  (spread 1.55)
+axis extrapolated to depth 0: 5.0 mm from the origin
+```
+
+**`arm_tilt` = 46.6°**, not the 12° this was first drawn around.
+
+That last line is what validates the reading. The gauge butts against the bend,
+so the origin *is* the corner — and the axis, extended back independently from
+the two windows, lands 5 mm from it. Nothing in the arithmetic forces that; it
+only comes out right if the gauge was held in the handle's plane. It is the one
+check that catches the failure mode nothing else here would see.
+
+The two edges agreeing to 1.55° puts the marks at about ±1 mm.
+
+The widths read 48 and 44 against 29. That is not an error: the scales are
+horizontal, so a bar crossing at 46.6° reads 29/cos(46.6°) = 42.2 mm. Marking
+through an offset window overshoots by 2–3 mm a side on top of that — and an
+equal overshoot on both edges cancels exactly in the centre, so it cannot move
+the angle. Only a *lopsided* error can, which is what `solve_corner.py` warns
+about.
+
+**Where the claw goes.** 75 mm down, not 90. A steep arm means sliding along it
+barely lifts the hook, and below ~61 mm of drop the caddy cannot be taken off at
+all — bisected against the `liftoff` check. 75 mm keeps ~13 mm of margin while
+giving the shortest, hence stiffest, strut that clears. The span comes out at
+113 mm against the old nominal's 114, so the steeper angle costs no stiffness.
 
 ### Using the corner gauge
 
@@ -204,11 +236,18 @@ as a plain hook — a bag loop drops in and the tip stops it sliding off.
 
 ## The checks
 
-Eight, in three kinds — and the distinction is the point:
+Thirteen, in three kinds — and the distinction is the point:
 
 - **NONEMPTY** (`exists_*`) — the parts render at all.
-- **EMPTY** (`arc_bar`, `arm_bar`, `mount`, `cup_bars`, `liftoff`) — clearances.
+- **EMPTY** (`arc_bar`, `arm_bar`, `mount`, `cup_bars`, `insert`,
+  `fused_insert`, `liftoff`, `fused_bars`, `fused_lift`) — clearances.
 - **SOLID** (`trapped`) — the hook really does block release.
+
+`insert` exists because `cup_bars` only proves the holder does not *touch* the
+handle while it sits there. Nothing tested the path a cup takes on the way in —
+straight down through the ring, with the arc running over it. A holder can pass
+every other check here and still be unusable because the bar is where your hand
+needs to be. It sweeps the bore upward and intersects the bars.
 
 The existence gate is not padding. Every "must be empty" check passes trivially
 against a part that renders to nothing, and during development a silently
@@ -221,7 +260,9 @@ rather than failing.
 
 ## Caveats
 
-- **The corner offsets are still nominal.** See *Measurements*.
+- **The corner geometry is measured, not verified on the stroller.** The
+  numbers come from one gauge reading; the `testfit` part is there to check them
+  cheaply before committing to the full print.
 - **The hook assumes a straight 34 mm run** of arc. It sits past the bend where
   the arc is roughly level, but the arc is still gently curved — if it rocks,
   drop `hook_len`.
